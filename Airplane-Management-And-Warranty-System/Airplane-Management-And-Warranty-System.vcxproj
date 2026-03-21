@@ -108,12 +108,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASIO_STANDALONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Ehinomhen\source\repos\Airplane-Management-And-Warranty-System\Server\external;C:\Users\Ehinomhen\source\repos\Airplane-Management-And-Warranty-System\Server\external\crow;C:\Users\Ehinomhen\source\repos\Airplane-Management-And-Warranty-System\Server\external\asio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\PostgreSQL\17\include;C:\Users\Ehinomhen\source\repos\Airplane-Management-And-Warranty-System\Server\external;C:\Users\Ehinomhen\source\repos\Airplane-Management-And-Warranty-System\Server\external\crow;C:\Users\Ehinomhen\source\repos\Airplane-Management-And-Warranty-System\Server\external\asio;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files\PostgreSQL\17\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libpq.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
