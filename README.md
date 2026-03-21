@@ -1,15 +1,19 @@
 # Airplane-Management-And-Warranty-System
 
+---
+
 # 🧾 Team Setup – Airplane Management Server
 
 ## **Step 1: Install vcpkg (one-time per machine)**
 
 Open **Command Prompt** or **PowerShell** and run:
 
+```bat
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 bootstrap-vcpkg.bat
 vcpkg integrate install
+```
 
 ✅ This installs vcpkg and tells Visual Studio to automatically detect vcpkg libraries.
 
@@ -19,9 +23,11 @@ vcpkg integrate install
 
 Run the following commands **in the same terminal**:
 
+```bat
 vcpkg install libpq:x64-windows@17.4
 vcpkg install crow:x64-windows
 vcpkg install asio:x64-windows
+```
 
 * `libpq` → PostgreSQL client library v17.4
 * `crow` → Crow C++ web framework
@@ -35,8 +41,10 @@ These libraries will now be available to Visual Studio.
 
 Navigate to the folder where you want the project and run:
 
+```bat
 git clone <your-repo-url>
 cd <your-repo-folder>
+```
 
 ---
 
@@ -56,7 +64,9 @@ The server project requires runtime DLLs (`libpq.dll`, etc.). This is handled au
 1. Right-click **Server Project → Properties → Build Events → Post-Build Event**
 2. Ensure the following command exists:
 
+```bat
 xcopy /Y /D "%VCPKG_ROOT%\installed\x64-windows\bin\*.dll" "$(OutDir)"
+```
 
 ✅ This copies all required DLLs into the server’s `x64/Debug` folder after building.
 
@@ -78,4 +88,7 @@ Navigate to `ServerProject\x64\Debug` and run the executable.
 * The server will connect to PostgreSQL via the vcpkg-provided `libpq`
 * Crow and Asio headers/libs are automatically resolved
 * All DLLs required for runtime are in place
+
+---
+
 
