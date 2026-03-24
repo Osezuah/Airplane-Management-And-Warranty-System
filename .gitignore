@@ -361,3 +361,14 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# --- vcpkg Specific ---
+# Ignore the actual compiled libraries and headers
+vcpkg_installed/
+
+# Ignore the vcpkg tool itself if you installed it as a submodule
+vcpkg/
+
+# Keep the manifest files (DO NOT ignore these)
+!vcpkg.json
+!vcpkg-configuration.json
