@@ -2,45 +2,32 @@
 
 ---
 
-# 🧾 Team Setup – Airplane Management Server
+# 🧾 Development Setup & Package Installation
 
-## **Step 1: Install vcpkg**
+## **Step 1: Clone Repo**
 
-Open **Command Prompt** or **PowerShell** and run:
+**WARNING: Make sure that the file path where the repo was cloned to does not contain any "&" or other special characters.**
 
-Clone the repo: git clone https://github.com/microsoft/vcpkg.git
+Clone the repo using the folllowing address: ``https://github.com/Osezuah/Airplane-Management-And-Warranty-System.git``
+Which is also found when clicking the green "<> Code" button above.
 
-Run the bootstrap script: .\vcpkg\bootstrap-vcpkg.bat
+*git bash commands:*
+```bash
+git clone "https://github.com/Osezuah/Airplane-Management-And-Warranty-System.git" "<Folder Path>"
+```
 
-Crucial Step: Run .\vcpkg\vcpkg integrate install from an Administrator terminal.
+## **Step 2: VCPKG**
 
-✅ This installs vcpkg and tells Visual Studio to automatically detect vcpkg libraries.
+Open the Solution in Visual Studio. Then, Open the Terminal under View > Terminal or pres CTRL+\`
+Run the following command:
+```bash
+vcpkg integrate install
+```
 
----
+## **Step 3: Ensure Manifest USage is Enabled**
 
-## **Step 2: Clone the project repository**
+Now, right click on the Server Project > Properties > Configuration Properties > vcpkg. Make sure that "Use vcpkg Manifest" is set to Yes (as should be the default).
 
-Clone this repository to your local machine.
+## **Step 4: Build**
 
-Open the .sln (Solution) file in Visual Studio 2022.
-
----
-
-## **Step 3: Automatic Dependency Install (Manifest Mode)**
-
-This project uses vcpkg Manifest Mode. You do not need to manually install any libraries.
-
-When you open the project, Visual Studio will detect the vcpkg.json file.
-
----
-
-## **Step 4: Troubleshooting**
-Missing Headers: If Visual Studio shows red squiggles initially, go to Server > Project Properties > Configuration Properties > vcpkg and ensure Use Vcpkg Manifest is set to Yes.
-
----
-
-## **Step 5: Build the server project**
-
-1. In Visual Studio, right-click the **Server Project → Build**
-
----
+Build the Solution. This should take a long time as the required dependencies are downloaded through vcpkg.
