@@ -4,91 +4,43 @@
 
 # 🧾 Team Setup – Airplane Management Server
 
-## **Step 1: Install vcpkg (one-time per machine)**
+## **Step 1: Install vcpkg**
 
 Open **Command Prompt** or **PowerShell** and run:
 
-```bat
-git clone https://github.com/microsoft/vcpkg.git
-cd vcpkg
-bootstrap-vcpkg.bat
-vcpkg integrate install
-```
+Clone the repo: git clone https://github.com/microsoft/vcpkg.git
+
+Run the bootstrap script: .\vcpkg\bootstrap-vcpkg.bat
+
+Crucial Step: Run .\vcpkg\vcpkg integrate install from an Administrator terminal.
 
 ✅ This installs vcpkg and tells Visual Studio to automatically detect vcpkg libraries.
 
 ---
 
-## **Step 2: Install required libraries via vcpkg**
+## **Step 2: Clone the project repository**
 
-Run the following commands **in the same terminal**:
+Clone this repository to your local machine.
 
-```bat
-vcpkg install libpq:x64-windows@17.4
-vcpkg install crow:x64-windows
-vcpkg install asio:x64-windows
-```
-
-* `libpq` → PostgreSQL client library v17.4
-* `crow` → Crow C++ web framework
-* `asio` → Asio networking library
-
-These libraries will now be available to Visual Studio.
+Open the .sln (Solution) file in Visual Studio 2022.
 
 ---
 
-## **Step 3: Clone the project repository**
+## **Step 3: Automatic Dependency Install (Manifest Mode)**
 
-Navigate to the folder where you want the project and run:
+This project uses vcpkg Manifest Mode. You do not need to manually install any libraries.
 
-```bat
-git clone <your-repo-url>
-cd <your-repo-folder>
-```
+When you open the project, Visual Studio will detect the vcpkg.json file.
 
 ---
 
-## **Step 4: Open the solution**
-
-1. Open `YourSolution.sln` in Visual Studio.
-2. Ensure the configuration is **Debug** and platform is **x64**.
-
-> Your solution is already configured to find Crow, Asio, and PostgreSQL headers/libs from vcpkg.
+## **Step 4: Troubleshooting**
+Missing Headers: If Visual Studio shows red squiggles initially, go to Server > Project Properties > Configuration Properties > vcpkg and ensure Use Vcpkg Manifest is set to Yes.
 
 ---
 
-## **Step 5: Post-build DLL copy for server project**
-
-The server project requires runtime DLLs (`libpq.dll`, etc.). This is handled automatically with a post-build step:
-
-1. Right-click **Server Project → Properties → Build Events → Post-Build Event**
-2. Ensure the following command exists:
-
-```bat
-xcopy /Y /D "%VCPKG_ROOT%\installed\x64-windows\bin\*.dll" "$(OutDir)"
-```
-
-✅ This copies all required DLLs into the server’s `x64/Debug` folder after building.
-
----
-
-## **Step 6: Build the server project**
+## **Step 5: Build the server project**
 
 1. In Visual Studio, right-click the **Server Project → Build**
-2. The executable will appear in `ServerProject\x64\Debug`
-
-> Only the **server project** requires these dependencies. The client project does not.
 
 ---
-
-## **Step 7: Run the server**
-
-Navigate to `ServerProject\x64\Debug` and run the executable.
-
-* The server will connect to PostgreSQL via the vcpkg-provided `libpq`
-* Crow and Asio headers/libs are automatically resolved
-* All DLLs required for runtime are in place
-
----
-
-
