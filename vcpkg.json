@@ -1,0 +1,12 @@
+{
+  "name": "Airplane-Management-And-Warranty-System",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "crow",
+    "asio",
+    {
+      "name": "libpq",
+      "version>=": "17.4"
+    }
+  ]
+}
