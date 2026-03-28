@@ -19,7 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Packet.cpp" />
+    <ClCompile Include="PacketFactory.cpp" />
+    <ClCompile Include="SequenceCounter.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="TimeUtils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Packet.h" />
+    <ClInclude Include="PacketFactory.h" />
+    <ClInclude Include="SequenceCounter.h" />
+    <ClInclude Include="TimeUtils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
