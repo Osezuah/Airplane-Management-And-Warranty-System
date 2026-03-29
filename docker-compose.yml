@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    build: .
+    container_name: amws_db_container
+    environment:
+      - POSTGRES_DB=amws
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Lkj876*bv
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
