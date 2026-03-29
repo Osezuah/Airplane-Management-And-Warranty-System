@@ -372,3 +372,6 @@ vcpkg/
 # Keep the manifest files (DO NOT ignore these)
 !vcpkg.json
 !vcpkg-configuration.json
+
+# Docker data 
+pgdata/
