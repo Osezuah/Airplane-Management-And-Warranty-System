@@ -24,9 +24,9 @@ Run the following command:
 vcpkg integrate install
 ```
 
-## **Step 3: Ensure Manifest USage is Enabled**
+## **Step 3: Ensure Manifest Usage is Enabled**
 
-Now, right click on the Server Project > Properties > Configuration Properties > vcpkg. Make sure that "Use vcpkg Manifest" is set to Yes (as should be the default).
+Now, ensure that the projects use vcpkg manifest by right clicking on both the Client and Server Projects > Properties > Configuration Properties > vcpkg. Make sure that "Use vcpkg Manifest" is set to Yes (as should be the default).
 
 ## **Step 4: Build**
 
