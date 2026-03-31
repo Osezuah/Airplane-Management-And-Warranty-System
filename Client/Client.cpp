@@ -4,7 +4,7 @@
 using namespace std;
 
 int main() {
-	//SPRINT #1 
+	//SPRINT #1 code
 	//Airplane Management and Warranty System Client
 	// This client will read user input and send it to the server
 	string input;
