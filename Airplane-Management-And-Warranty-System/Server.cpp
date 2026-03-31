@@ -4,7 +4,7 @@
 
 
 int main() {
-	//AI generated code by ChatGPT-4, 2024-06-01
+	//SPRINT # 1
 	//Airplane Management and Warranty System Server
 	// Connect to the PostgreSQL database v17.4
 	PGconn* conn = PQconnectdb(

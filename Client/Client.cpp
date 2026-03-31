@@ -4,7 +4,7 @@
 using namespace std;
 
 int main() {
-	//AI generated code by ChatGPT-4, 2024-06-01
+	//SPRINT #1 
 	//Airplane Management and Warranty System Client
 	// This client will read user input and send it to the server
 	string input;
