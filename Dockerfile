@@ -6,7 +6,7 @@ ENV TZ=America/Toronto
 
 # Copy schema and seed scripts
 COPY ./db/01_schema.sql /docker-entrypoint-initdb.d/
-COPY ./db/02_seed.sql /docker-entrypoint-initdb.d/
+COPY ./db/02_seed_data.sql /docker-entrypoint-initdb.d/
 
 # Expose the standard Postgres port
 EXPOSE 5432
