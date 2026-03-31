@@ -26,6 +26,7 @@
     <ClCompile Include="TimeUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ErrorCode.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="SequenceCounter.h" />
