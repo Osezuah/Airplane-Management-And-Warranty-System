@@ -3,7 +3,9 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include <span>
+#include <stdexcept>
+
+#include "TimeUtils.h"
 
 # define PACKETHEADER_BYTE_SIZE 17
 
@@ -35,21 +37,22 @@ static_assert(sizeof(PacketHeader) == PACKETHEADER_BYTE_SIZE,
 class Packet
 {
 public:
-    PacketHeader header;
+    PacketHeader header{};
     std::vector<uint8_t> payload;
 
     Packet();
 
-    Packet(PacketType type, uint32_t sequence, std::vector<uint8_t> payload_data);
+    Packet(PacketType type, uint32_t sequence, std::vector<uint8_t> payloadData);
 
     std::vector<uint8_t> Serialize();
 
-    static Packet Deserialize(std::span<const uint8_t> raw);
+    static Packet Deserialize(const uint8_t* data, size_t size);
 
     // accessors
-    PacketType getType();
-    uint32_t getSequence();
-    uint64_t getTimestampMiliseconds();
-    uint32_t payloadSize();
+    PacketType getType() const;
+    uint32_t getSequence() const;
+    uint64_t getTimestampMiliseconds() const;
+    uint32_t payloadSize() const;
+    std::string payloadString() const;
 };
 

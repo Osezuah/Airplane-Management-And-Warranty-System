@@ -14,7 +14,7 @@ public:
 	TimeUtils() = delete;
 
 	// Current timestamp in miliseconds
-	static int64_t now_ms();
+	static int64_t NowMs();
 
     // Returns input time as string in the following format:
     // Year-Month-Day-Hour:Minute:Second.Milisecond
