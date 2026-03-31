@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "TimeUtils.h"
 
 int64_t TimeUtils::NowMs() {

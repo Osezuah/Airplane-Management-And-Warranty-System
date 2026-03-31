@@ -17,7 +17,7 @@ Packet PacketFactory::Handshake(uint32_t sequence, const std::string& username, 
     return Packetize(PacketType::HANDSHAKE, sequence, body);
 }
 
-Packet PacketFactory::HandshakeAck(uint32_t sequence, bool success, const std::string& sessionToken = "")
+Packet PacketFactory::HandshakeAck(uint32_t sequence, bool success, const std::string& sessionToken)
 {
     crow::json::wvalue body;
     body["success"] = success;
