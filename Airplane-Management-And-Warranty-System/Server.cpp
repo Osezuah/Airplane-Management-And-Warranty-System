@@ -4,7 +4,7 @@
 
 
 int main() {
-	//SPRINT # 1 code
+	//SPRINT # 1 
 	//Airplane Management and Warranty System Server
 	// Connect to the PostgreSQL database v17.4
 	PGconn* conn = PQconnectdb(
