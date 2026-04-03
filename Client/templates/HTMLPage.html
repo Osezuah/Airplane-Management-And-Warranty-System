@@ -1,0 +1,27 @@
+<HTML>
+<HEAD>
+<META NAME="GENERATOR" Content="Microsoft Visual Studio">
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+
+    <button onclick="connectToServer()">Connect to TCP Server</button>
+    <p id="output"></p>
+
+    <script>
+        //function to connect to server via TCP 
+       async function connectToServer() {
+           const res = await fetch("http://localhost:8080/connect-to-tcp-server", {
+               method: "POST",
+               body: "Hello TCP Server"
+           });
+            const data = await res.text();
+
+            console.log(data);
+
+            document.getElementById("output").innerText = data; //display server response on page
+        }
+    </script>
+
+</BODY>
+</HTML>
