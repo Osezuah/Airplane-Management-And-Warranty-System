@@ -18,7 +18,7 @@ public:
     // Authentication
     static Packet Handshake(uint32_t sequence, const std::string& username, const std::string& authToken);
     static Packet HandshakeAck(uint32_t sequence, bool success, const std::string& sessionToken = "");
-    
+   
     // Maintenance Event Submission
     static Packet MaintenanceEvent(uint32_t sequence, int aircraftId, const std::string& technician, const std::string& eventType, const std::string& description);
 
