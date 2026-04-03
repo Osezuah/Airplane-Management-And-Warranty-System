@@ -3,10 +3,23 @@
 #include <ws2tcpip.h>
 #include <string>
 #include <iostream>
-
+#include <libpq-fe.h>
 using namespace std;
 
 int main() {
+	// Connect to the PostgreSQL database on docker v17.4
+	PGconn* conn = PQconnectdb(
+		"host=127.0.0.1 port=5432 dbname=amws user=postgres password=Lkj876*bv"
+	);
+	if (PQstatus(conn) != CONNECTION_OK) {
+		fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+		PQfinish(conn);
+		return 1;
+	}
+	else {
+		printf("Connected to database successfully!\n");
+	}
+
 	//TCP Server
 	WSADATA wsData;
 	WORD ver = MAKEWORD(2, 2);
