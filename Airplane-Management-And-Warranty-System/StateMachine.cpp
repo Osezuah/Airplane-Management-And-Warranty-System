@@ -5,47 +5,52 @@ ServerState StateMachine::GetState() const
     return currentState;
 }
 
-bool StateMachine::TransitionStateTo(ServerState newState)
+bool StateMachine::IsStateTransitionValid(ServerState state)
 {
-    bool validTransition = false;
-
     switch (currentState) {
     case ServerState::IDLE:
-        if (newState == ServerState::WAITING_FOR_VERIFICATION) 
-            validTransition = true;
+        if (state == ServerState::WAITING_FOR_VERIFICATION)
+            return true;
         break;
 
     case ServerState::WAITING_FOR_VERIFICATION:
-        if (newState == ServerState::CONNECTED)
-            validTransition = true;
+        if (state == ServerState::CONNECTED)
+            return true;
         break;
 
     case ServerState::CONNECTED:
-        if (newState == ServerState::PROCESSING_REQUEST)
-            validTransition = true;
-        if (newState == ServerState::IDLE)
-            validTransition = true;
+        if (state == ServerState::PROCESSING_REQUEST)
+            return true;
+        if (state == ServerState::IDLE)
+            return true;
         break;
 
     case ServerState::PROCESSING_REQUEST:
-        if (newState == ServerState::TRANSFERRING_DATA)
-            validTransition = true;
-        if (newState == ServerState::CONNECTED)
-            validTransition = true;
+        if (state == ServerState::TRANSFERRING_DATA)
+            return true;
+        if (state == ServerState::CONNECTED)
+            return true;
         break;
 
     case ServerState::TRANSFERRING_DATA:
-        if (newState == ServerState::CONNECTED)
-            validTransition = true;
+        if (state == ServerState::CONNECTED)
+            return true;
         break;
 
-    case ServerState::ERROR:
-        if (newState == ServerState::IDLE)
-            validTransition = true;
+    case ServerState::ERROR_STATE:
+        if (state == ServerState::IDLE)
+            return true;
         break;
+    default:
+        return false;
     }
+}
 
-    if (validTransition || newState == ServerState::ERROR) {
+bool StateMachine::TransitionStateTo(ServerState newState)
+{
+    bool validTransition = IsStateTransitionValid(newState);
+
+    if (validTransition || newState == ServerState::ERROR_STATE) {
         currentState = newState;
         return true;
     }
@@ -61,7 +66,7 @@ std::string StateMachine::StateToString()
     case ServerState::CONNECTED: return "CONNECTED";
     case ServerState::PROCESSING_REQUEST: return "PROCESSING_REQUEST";
     case ServerState::TRANSFERRING_DATA: return "TRANSFERRING_DATA";
-    case ServerState::ERROR: return "ERROR";
+    case ServerState::ERROR_STATE: return "ERROR_STATE";
     default: return "UNKNOWN";
     }
 }

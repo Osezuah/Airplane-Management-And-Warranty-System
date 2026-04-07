@@ -7,7 +7,7 @@ enum class ServerState {
 	CONNECTED,
 	PROCESSING_REQUEST,
 	TRANSFERRING_DATA,
-	ERROR
+	ERROR_STATE
 };
 
 class StateMachine
@@ -15,6 +15,8 @@ class StateMachine
 	ServerState currentState = ServerState::IDLE;
 public:
 	ServerState GetState() const;
+
+	bool IsStateTransitionValid(ServerState state);
 
 	// Returns true on successful transition,
 	// otherwise return false.

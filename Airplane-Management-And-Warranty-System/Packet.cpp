@@ -3,7 +3,7 @@
 
 Packet::Packet()
 {
-	this->header.packetType = static_cast<uint8_t>(PacketType::ERROR);
+	this->header.packetType = static_cast<uint8_t>(PacketType::ERROR_PACKET);
 	this->header.payloadLength = 0;
 	this->header.sequenceNumber = 0;
 	this->header.timestamp = 0;
