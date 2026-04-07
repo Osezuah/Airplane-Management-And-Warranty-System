@@ -4,24 +4,110 @@
 <TITLE></TITLE>
 </HEAD>
 <BODY>
-
+    <h1>Airplane Warranty and Maintenance system</h1>
     <button onclick="connectToServer()">Connect to TCP Server</button>
     <p id="output"></p>
 
+    <h2>Airplane Fleet Overview</h2>
+    <p id="airplaneList">Connecting to system...</p>
+
+    <div id="airplaneContainer" class="airplane-grid"></div>
+
     <script>
-        //function to connect to server via TCP 
-       async function connectToServer() {
-           const res = await fetch("http://localhost:8080/connect-to-tcp-server", {
-               method: "POST",
-               body: "Hello TCP Server"
-           });
-            const data = await res.text();
+        //function to connect to server via TCP
+        async function connectToServer() {
+            const output = document.getElementById("output");
+            output.innerText = "Status: Initializing Handshake...";
+            output.style.color = "orange";
+  
+            const res = await fetch("http://localhost:8080/connect-to-tcp-server", { method: "POST" });
 
-            console.log(data);
+            if (res.ok) {
+                output.innerText = "Status: Connected to TCP Server";
+                output.style.color = "green";
 
-            document.getElementById("output").innerText = data; //display server response on page
+                console.log("Handshake successful. Fetching airplane database...");
+                await loadAirplanes();
+            } else {
+                output.innerText = "Status: Handshake Failed - Unexpected Response";
+                output.style.color = "red";
+            }
+            
+        }
+
+        // function to load airplane data from server and display it on the page
+        async function loadAirplanes() {
+            const container = document.getElementById("airplaneContainer"); 
+            const output2 = document.getElementById("airplaneList");
+            try {
+                const resp = await fetch("http://localhost:8080/list/airplane"); 
+                const packet = await resp.json();
+
+                //const packet = JSON.parse(rawData);
+                console.log("Packet Object:", packet);
+
+                const airplanes = JSON.parse(packet.records);
+                console.log("Parsed Airplanes Array:", airplanes);
+
+                container.innerHTML = ""; // Clear loader
+
+                airplanes.forEach(plane => {
+                    const card = `
+                        <div class="card">
+                            <h3>${plane.name || 'Unknown Model'}</h3>
+                            <p><span class="label">ID:</span> ${plane.airplaneid}</p>
+                            <p><span class="label">Manufacturer:</span> ${plane.manufacturer || 'N/A'}</p>
+                            <p><span class="label">Engines:</span> ${plane.engines || 0}</p>
+                            <p><span class="label">Range:</span> ${plane.rangekm || 'Never'}</p>
+                            <p><span class="label">Cargo Capacity (Kg):</span> ${plane.cargocapacitykg || 'Active'}</p>
+                            <p><span class="label">Fuel Capacity (L) Exp:</span> ${plane.fuelcapacityl || 'N/A'}</p>
+                            <p><span class="label">Airplane Length (m):</span> ${plane.airplanelengthm || 'N/A'}</p>
+                            <p><span class="label">Wing Span (m):</span> ${plane.wingspanm || 'N/A'}</p>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+
+                output2.innerText = `Showing ${packet.totalCount} Airplanes`;
+            } catch (error) {
+                document.getElementById("output").innerText = "Error: " + error;
+            }
         }
     </script>
+
+    
+    <style>
+        /*CSS for styling the airplane cards and grid layout*/
+        .airplane-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+            .card h3 {
+                margin-top: 0;
+                color: #0056b3;
+            }
+
+            .card p {
+                margin: 5px 0;
+                font-size: 0.9em;
+            }
+
+        .label {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
 
 </BODY>
 </HTML>

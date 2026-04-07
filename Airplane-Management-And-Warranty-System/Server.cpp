@@ -8,13 +8,32 @@
 #include <string>
 #include <iostream>
 #include <vector>
-
 #include "Packet.h"
 #include "PacketFactory.h"
 #include "StateMachine.h"
 #include "Logger.h"
 
 #define PAGE_SIZE 4096
+
+void send_all_airplanes_to_client(SOCKET clientSocket, PGconn* conn, Packet request) {
+	// Database logic
+	PGresult* res = PQexec(conn, "SELECT row_to_json(t) FROM (SELECT * FROM Airplane) t;");
+	int rows = PQntuples(res);
+
+	std::string records = "[";
+	for (int i = 0; i < rows; i++) {
+		records += PQgetvalue(res, i, 0);
+		if (i < rows - 1) records += ",";
+	}
+	records += "]";
+	PQclear(res);
+	std::cout << records << std::endl;
+
+	// Send the response back
+	Packet response = PacketFactory::QueryResponse(request.getSequence(), rows, records);
+	std::vector<uint8_t> out = response.Serialize();
+	send(clientSocket, (const char*)out.data(), (int)out.size(), 0);
+}
 
 int main() {
 	Logger logger;

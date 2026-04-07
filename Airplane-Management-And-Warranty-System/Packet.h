@@ -46,7 +46,7 @@ public:
 
     std::vector<uint8_t> Serialize();
 
-    static Packet Deserialize(const uint8_t* data, size_t size);
+    static Packet Deserialize(const uint8_t* data, size_t size, bool headerOnly);
 
     // accessors
     PacketType getType() const;
