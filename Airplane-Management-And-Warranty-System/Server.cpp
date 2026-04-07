@@ -119,7 +119,7 @@ int main() {
 
 			// Handle actual packet work
 			try {
-				Packet inputPacket = Packet::Deserialize(rxBuffer.data(), bytesReceived);
+				Packet inputPacket = Packet::Deserialize(rxBuffer.data(), bytesReceived, false);
 				crow::json::rvalue data = crow::json::load(inputPacket.payloadString());
 				Packet outputPacket;
 				if (!data) {
@@ -155,7 +155,7 @@ int main() {
 						}
 						else {
 							logger.Log("Failed to authenticate. Wrong packet type received.");
-							stateMachine.TransitionStateTo(ServerState::ERROR);
+							stateMachine.TransitionStateTo(ServerState::ERROR_STATE);
 							outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::UNAUTHORIZED, "Invalid packet");
 						}
 						break;
