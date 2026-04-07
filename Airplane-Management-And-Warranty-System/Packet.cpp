@@ -80,8 +80,12 @@ uint32_t Packet::payloadSize() const
 
 std::string Packet::payloadString() const
 {
-	const uint8_t* rawBytes = payload.data();
+	/*const uint8_t* rawBytes = payload.data();
 	const char* asChar = reinterpret_cast<const char*>(rawBytes);
 	std::string asString(asChar, payload.size());
-	return asString;
+	return asString;*/
+	std::string s(payload.begin(), payload.end());
+	// Remove any trailing null terminators that might have snuck in from the network buffer
+	s.erase(std::find(s.begin(), s.end(), '\0'), s.end());
+	return s;
 }

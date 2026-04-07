@@ -8,34 +8,23 @@
 #include "..\Airplane-Management-And-Warranty-System\PacketFactory.h"
 
 void send_all_airplanes_to_client(SOCKET clientSocket, PGconn* conn, Packet request) {
-	// Get Header
-	/*std::vector<uint8_t> hBuf(PACKETHEADER_BYTE_SIZE);
-	int hRec = recv(clientSocket, (char*)hBuf.data(), PACKETHEADER_BYTE_SIZE, 0);*/
+	// Database logic
+	PGresult* res = PQexec(conn, "SELECT row_to_json(t) FROM (SELECT * FROM Airplane) t;");
+	int rows = PQntuples(res);
 
-	/*if (hRec == PACKETHEADER_BYTE_SIZE) {
-		Packet reqHead = Packet::Deserialize(hBuf.data(), hRec);*/
+	std::string records = "[";
+	for (int i = 0; i < rows; i++) {
+		records += PQgetvalue(res, i, 0);
+		if (i < rows - 1) records += ",";
+	}
+	records += "]";
+	PQclear(res);
+	std::cout << records << std::endl;
 
-		// If there's a payload, get it (though QUERY_REQUEST is usually just header)
-		/*if (request.getType() == PacketType::QUERY_REQUEST) {*/
-
-		// Database logic
-		PGresult* res = PQexec(conn, "SELECT row_to_json(t) FROM (SELECT * FROM airplanes) t;");
-		int rows = PQntuples(res);
-
-		std::string records = "[";
-		for (int i = 0; i < rows; i++) {
-			records += PQgetvalue(res, i, 0);
-			if (i < rows - 1) records += ",";
-		}
-		records += "]";
-		PQclear(res);
-
-		// Send the response back
-		Packet response = PacketFactory::QueryResponse(request.getSequence(), rows, records);
-		std::vector<uint8_t> out = response.Serialize();
-		send(clientSocket, (const char*)out.data(), (int)out.size(), 0);
-		/*}*/
-	/*}*/
+	// Send the response back
+	Packet response = PacketFactory::QueryResponse(request.getSequence(), rows, records);
+	std::vector<uint8_t> out = response.Serialize();
+	send(clientSocket, (const char*)out.data(), (int)out.size(), 0);
 }
 
 int main() {

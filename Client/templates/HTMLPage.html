@@ -37,23 +37,21 @@
 
         // function to load airplane data from server and display it on the page
         async function loadAirplanes() {
+            const container = document.getElementById("airplaneContainer"); 
+            const output2 = document.getElementById("airplaneList");
             try {
-                const res = await fetch("http://localhost:8080/list/airplane");
+                const resp = await fetch("http://localhost:8080/list/airplane"); 
+                const packet = await resp.json();
 
-                const text = res.text();
+                //const packet = JSON.parse(rawData);
+                console.log("Packet Object:", packet);
 
-                if (!Array.isArray(text)) {
-                    data = [text];
-                }
-
-                const container = document.getElementById("airplaneContainer");
-                const output = document.getElementById("airplaneList");
+                const airplanes = JSON.parse(packet.records);
+                console.log("Parsed Airplanes Array:", airplanes);
 
                 container.innerHTML = ""; // Clear loader
 
-                data.forEach(plane => {
-                    // Since you have 9 columns, we list them all out here
-                    // Make sure these names match your Postgres column names!
+                airplanes.forEach(plane => {
                     const card = `
                         <div class="card">
                             <h3>${plane.name || 'Unknown Model'}</h3>
@@ -70,7 +68,7 @@
                     container.innerHTML += card;
                 });
 
-                output.innerText = `Showing ${data.length} Airplanes`;
+                output2.innerText = `Showing ${packet.totalCount} Airplanes`;
             } catch (error) {
                 document.getElementById("output").innerText = "Error: " + error;
             }
