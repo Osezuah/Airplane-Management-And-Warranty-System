@@ -1,60 +1,101 @@
-#pragma comment(lib, "Ws2_32.lib")
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
+
+#include <libpq-fe.h>
+#pragma comment(lib, "libpq.lib")
+
 #include <string>
 #include <iostream>
-#include <libpq-fe.h>
-using namespace std;
+#include <vector>
+
+#include "Packet.h"
+#include "PacketFactory.h"
+#include "StateMachine.h"
+#include "Logger.h"
+
+#define PAGE_SIZE 4096
 
 int main() {
+	Logger logger;
+	StateMachine stateMachine;
+
 	// Connect to the PostgreSQL database on docker v17.4
 	//Airplane Management and Warranty System Server
 	// Connect to the PostgreSQL database v17.4
-	PGconn* conn = PQconnectdb(
-		"host=127.0.0.1 port=5432 dbname=amws user=postgres password=Lkj876*bv"
-	);
+	PGconn* conn = PQconnectdb("host=127.0.0.1 port=5432 dbname=amws user=postgres password=Lkj876*bv");
 	if (PQstatus(conn) != CONNECTION_OK) {
-		fprintf(stderr, "Connection to database failed: %s", PQerrorMessage(conn));
+		logger.Log("Connection to database failed: " + std::string(PQerrorMessage(conn)));
 		PQfinish(conn);
 		return 1;
 	}
-	else {
 
-		//TCP Server
-		WSADATA wsData;
-		WORD ver = MAKEWORD(2, 2);
-
-		int wsOk = WSAStartup(ver, &wsData);
-		if (wsOk != 0) {
-			std::cerr << "Can't initialize winsock!" << std::endl;
-			return 1;
-		}
-
-		SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-
-		sockaddr_in hint{};
-		hint.sin_family = AF_INET;
-		hint.sin_port = htons(54000);
-		hint.sin_addr.S_un.S_addr = INADDR_ANY;
-
-		bind(serverSocket, (sockaddr*)&hint, sizeof(hint));
-
-		//loop to keep the server constantly running
-		while (1) {
-			listen(serverSocket, SOMAXCONN);
-
-			SOCKET clientSocket = accept(serverSocket, nullptr, nullptr);
-
-			char buf[4096];
-			int bytesReceived = recv(clientSocket, buf, 4096, 0);
-
-			std::string response = "Processed: " + std::string(buf, bytesReceived);
-
-			send(clientSocket, response.c_str(), response.size(), 0);
-
-			cout << response;
-		}
-
-		return 0;
+	// Setup Server through Winsock
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+		logger.Log("Can't initialize winsock!");
+		return 1;
 	}
+
+
+	SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (serverSocket == INVALID_SOCKET) {
+		logger.Log("Invalid socket.");
+		WSACleanup();
+		return 1;
+	}
+
+	// Bind socket to address
+	struct sockaddr_in serverAddress;
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = INADDR_ANY;
+	serverAddress.sin_port = htons(27000);
+
+	if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
+		logger.Log("Failed to bind socket.");
+		closesocket(serverSocket);
+		WSACleanup();
+		return 1;
+	}
+
+	// Server listens on a socket
+	if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
+		logger.Log("Socket failed to listen.");
+		closesocket(serverSocket);
+		WSACleanup();
+		return 1;
+	}
+	logger.Log("Server setup finished. Server ON. State: " + stateMachine.StateToString());
+
+	// Loop to keep the server constantly running as new connections are accepted
+	bool listening = true;
+	while (listening) {
+		// Reset state machine if not already in new connection
+		if (stateMachine.GetState() != ServerState::IDLE)
+			stateMachine.TransitionStateTo(ServerState::IDLE);
+
+		std::cout << "Waiting for client connection...\n" << std::endl;
+
+		SOCKET clientSocket = accept(serverSocket, nullptr, nullptr);
+		// Skip client on failed handshake
+		if (clientSocket == INVALID_SOCKET) continue;
+
+		// Transition state on client connection
+		stateMachine.TransitionStateTo(ServerState::WAITING_FOR_VERIFICATION);
+		logger.Log("Client connected and waiting for verification. State: " + stateMachine.StateToString());
+
+		// Client work loop
+		bool connected = true;
+		while (connected) {
+			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			int bytesReceived = recv(clientSocket, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+
+			if (bytesReceived <= 0)
+		}
+		closesocket(clientSocket);
+	}
+	closesocket(serverSocket);
+	WSACleanup();
+	PQfinish(conn);
+	return 0;
 }

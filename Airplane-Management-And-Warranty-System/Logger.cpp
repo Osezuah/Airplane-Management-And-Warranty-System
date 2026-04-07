@@ -17,7 +17,7 @@ void Logger::Log(const std::string& message)
         std::cout << entry << std::endl; // print to console
     }
     else { // bad path
-        std::cout << "could not log (" << entry << ") as log file was not open.";
+        std::cout << "could not log (" << entry << ") as log file was not open.\n";
     }    
 }
 
