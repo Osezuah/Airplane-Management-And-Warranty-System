@@ -8,11 +8,11 @@ Packet PacketFactory::Packetize(PacketType type, uint32_t sequence, crow::json::
     return Packet(type, sequence, bytes);
 }
 
-Packet PacketFactory::Handshake(uint32_t sequence, const std::string& username, const std::string& authToken)
+Packet PacketFactory::Handshake(uint32_t sequence, const std::string& technicianID, const std::string& name)
 {
     crow::json::wvalue body;
-    body["username"] = username;
-    body["authToken"] = authToken;
+    body["technicianID"] = technicianID;
+    body["name"] = name;
 
     return Packetize(PacketType::HANDSHAKE, sequence, body);
 }
@@ -26,21 +26,21 @@ Packet PacketFactory::HandshakeAck(uint32_t sequence, bool success, const std::s
     return Packetize(PacketType::HANDSHAKE_ACK, sequence, body);
 }
 
-Packet PacketFactory::MaintenanceEvent(uint32_t sequence, int aircraftId, const std::string& technician, const std::string& eventType, const std::string& description)
+Packet PacketFactory::MaintenanceEvent(uint32_t sequence, int airplaneID, const std::string& technicianID, const std::string& eventType, const std::string& description)
 {
     crow::json::wvalue body;
-    body["aircraftId"] = aircraftId;
-    body["technician"] = technician;
+    body["airplaneID"] = airplaneID;
+    body["technicianID"] = technicianID;
     body["eventType"] = eventType;
     body["description"] = description;
 
     return Packetize(PacketType::MAINTENANCE_EVENT, sequence, body);
 }
 
-Packet PacketFactory::QueryRequest(uint32_t sequence, int aircraftId)
+Packet PacketFactory::QueryRequest(uint32_t sequence, int airplaneID)
 {
     crow::json::wvalue body;
-    body["aircraftId"] = aircraftId;
+    body["airplaneID"] = airplaneID;
 
     return Packetize(PacketType::QUERY_REQUEST, sequence, body);
 }
@@ -54,18 +54,18 @@ Packet PacketFactory::QueryResponse(uint32_t sequence, int totalCount, const std
     return Packetize(PacketType::QUERY_RESPONSE, sequence, body);
 }
 
-Packet PacketFactory::ReportRequest(uint32_t sequence, int aircraftId)
+Packet PacketFactory::ReportRequest(uint32_t sequence, int airplaneID)
 {
     crow::json::wvalue body;
-    body["aircraftId"] = aircraftId;
+    body["airplaneID"] = airplaneID;
 
     return Packetize(PacketType::REPORT_REQUEST, sequence, body);
 }
 
-Packet PacketFactory::ReportData(uint32_t sequence, int aircraftId, const std::string& reportData)
+Packet PacketFactory::ReportData(uint32_t sequence, int airplaneID, const std::string& reportData)
 {
     crow::json::wvalue body;
-    body["aircraftId"] = aircraftId;
+    body["airplaneID"] = airplaneID;
     body["reportData"] = reportData;
 
     return Packetize(PacketType::REPORT_DATA, sequence, body);
@@ -82,5 +82,5 @@ Packet PacketFactory::Error(uint32_t sequence, ErrorCode code, const std::string
     body["code"] = static_cast<int32_t>(code);
     body["detail"] = detail;
 
-    return Packetize(PacketType::PACKET_ERROR, sequence, body);
+    return Packetize(PacketType::ERROR_PACKET, sequence, body);
 }

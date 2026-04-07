@@ -18,7 +18,7 @@ enum class PacketType : uint8_t {
     REPORT_REQUEST = 0x30,    // Client -> Server / Client requests warranty record
     REPORT_DATA = 0x31,       // Server -> Client / Server responds with warranty
     ACK = 0x0F,               // Both ways
-    PACKET_ERROR = 0xFF              // Both ways
+    ERROR_PACKET = 0xFF              // Both ways
 };
 
 #pragma pack(push, 1) // prevents compiler padding ensuring header size

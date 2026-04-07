@@ -31,7 +31,7 @@ Now, ensure that the projects use vcpkg manifest by right clicking on both the C
 ## **Step 4: Database**
 
 Make sure to have Postgresql version 17 and Docker installed.
-*Docker should be runningbefore the next step, and while using the program.*
+*Docker should be running before the next step, and while using the program.*
 
 Run the following command on your Developer Command Prompt in Visual Studio or your terminal to build the database:
 ```bash

@@ -19,17 +19,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="SequenceCounter.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="StateMachine.cpp" />
     <ClCompile Include="TimeUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ErrorCode.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="SequenceCounter.h" />
+    <ClInclude Include="StateMachine.h" />
     <ClInclude Include="TimeUtils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -3,7 +3,7 @@
 
 Packet::Packet()
 {
-	this->header.packetType = static_cast<uint8_t>(PacketType::PACKET_ERROR);
+	this->header.packetType = static_cast<uint8_t>(PacketType::ERROR_PACKET);
 	this->header.payloadLength = 0;
 	this->header.sequenceNumber = 0;
 	this->header.timestamp = 0;
@@ -15,7 +15,7 @@ Packet::Packet(PacketType type, uint32_t sequence, std::vector<uint8_t> payloadD
 	this->payload = std::move(payloadData);
 
 	if (payload.size() > UINT32_MAX)
-		throw std::length_error("Payload too large.");
+		throw std::length_error("Payload too large.\n");
 
 	this->header.packetType = static_cast<uint8_t>(type);
 	this->header.sequenceNumber = sequence;
@@ -35,7 +35,7 @@ std::vector<uint8_t> Packet::Serialize()
 Packet Packet::Deserialize(const uint8_t* data, size_t size, bool headerOnly)
 {
 	if (size < PACKETHEADER_BYTE_SIZE)
-		throw std::runtime_error("Buffer too small to contain header.");
+		throw std::runtime_error("Buffer too small to contain header.\n");
 
 	// Copy header
 	Packet packet;
@@ -48,7 +48,7 @@ Packet Packet::Deserialize(const uint8_t* data, size_t size, bool headerOnly)
 	// Check for payload length accuracy
 	const size_t expected = PACKETHEADER_BYTE_SIZE + packet.header.payloadLength;
 	if (size < expected)
-		throw std::runtime_error("Received less payload bytes than expected.");
+		throw std::runtime_error("Received less payload bytes than expected.\n");
 
 	// Deserialize payload, reading only what is after header
 	packet.payload.assign(
