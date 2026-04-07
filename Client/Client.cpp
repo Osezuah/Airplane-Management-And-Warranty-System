@@ -5,8 +5,6 @@
 #include "..\Airplane-Management-And-Warranty-System\Packet.h"
 #include "..\Airplane-Management-And-Warranty-System\PacketFactory.h"
 
-SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-
 //function to connect to serve via TCP sockets by sending a message - client
 std::string send_to_tcp_server(const std::string& message, SOCKET sock) {
 	send(sock, message.c_str(), message.size(), 0);
@@ -75,24 +73,39 @@ int main() {
 	//route to connect to server via TCP sockets
 	CROW_ROUTE(app, "/connect-to-tcp-server").methods("POST"_method)
 		([](const crow::request& req) {
+			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 			sockaddr_in serverAddr{};
 			serverAddr.sin_family = AF_INET;
 			serverAddr.sin_port = htons(54000);
 			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-			std::string requestData = req.body;
+		
+			Packet handshake = PacketFactory::Handshake(1, "client", "1111"); 
+			std::vector<uint8_t> out = handshake.Serialize();
 
-			// Send to TCP server
-			std::string response = send_to_tcp_server(requestData, sock);
+			send(sock, (const char*)out.data(), (int)out.size(), 0);
 
-			return crow::response(response);
+			char buffer[PACKETHEADER_BYTE_SIZE];
+			int bytes = recv(sock, buffer, PACKETHEADER_BYTE_SIZE, 0);
+			std::string tcpResponse(buffer, bytes);
+			closesocket(sock);
+			return crow::response("{\"status\": \"" + tcpResponse + "\"}");
 		});
 
 	//route to access airplanes in database
 	CROW_ROUTE(app, "/list/airplane").methods("GET"_method)
 		([]() {
+			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+			sockaddr_in serverAddr{};
+			serverAddr.sin_family = AF_INET;
+			serverAddr.sin_port = htons(54000);
+			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
+
+			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
+
 			std::string airplanesJson = get_all_airplanes_from_server(sock);
+			closesocket(sock);
 			return crow::response(airplanesJson);
 		});
 

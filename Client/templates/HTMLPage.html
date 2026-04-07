@@ -16,30 +16,34 @@
     <script>
         //function to connect to server via TCP
         async function connectToServer() {
-            const res = await fetch("http://localhost:8080/connect-to-tcp-server", {
-                method: "POST",
-                body: "Hello TCP Server"
-            });
-            const data = await res.text();
+            const output = document.getElementById("output");
+            output.innerText = "Status: Initializing Handshake...";
+            output.style.color = "orange";
+  
+            const res = await fetch("http://localhost:8080/connect-to-tcp-server", { method: "POST" });
 
-            console.log(data);
+            if (res.ok) {
+                output.innerText = "Status: Connected to TCP Server";
+                output.style.color = "green";
 
-            document.getElementById("output").innerText = "Status: " + data; //display server response on page
-
-            if (data.includes("Connected") || res.ok) {
-                console.log("Connection confirmed. Loading airplane list...");
+                console.log("Handshake successful. Fetching airplane database...");
                 await loadAirplanes();
+            } else {
+                output.innerText = "Status: Handshake Failed - Unexpected Response";
+                output.style.color = "red";
             }
+            
         }
 
         // function to load airplane data from server and display it on the page
         async function loadAirplanes() {
             try {
                 const res = await fetch("http://localhost:8080/list/airplane");
-                let data = await res.json();
 
-                if (!Array.isArray(data)) {
-                    data = [data];
+                const text = res.text();
+
+                if (!Array.isArray(text)) {
+                    data = [text];
                 }
 
                 const container = document.getElementById("airplaneContainer");

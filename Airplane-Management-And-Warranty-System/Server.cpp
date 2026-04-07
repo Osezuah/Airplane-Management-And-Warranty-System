@@ -78,48 +78,34 @@ int main() {
 			std::cout << "Listen failed! Error: " << WSAGetLastError() << std::endl;
 			return 1;
 		}
-		SOCKET clientSocket = accept(serverSocket, nullptr, nullptr);
+		
 		//loop to keep the server constantly running
 		while (true) {
-			if (clientSocket != INVALID_SOCKET) {
-				char buf[PACKETHEADER_BYTE_SIZE];
-				int bytesReceived = recv(clientSocket, buf, PACKETHEADER_BYTE_SIZE, 0);
-
-				std::string response = "Connected";
-
-				send(clientSocket, response.c_str(), response.size(), 0);
-
-				std::cout << response << std::endl;
-				break;
-			}
-			else {
-				int err = WSAGetLastError();
-				std::cerr << "Failed to accept client connection with error: " << err << std::endl;
+			SOCKET clientSocket = accept(serverSocket, nullptr, nullptr);
+			if (clientSocket == INVALID_SOCKET)
+			{
 				continue;
-			}			
-		}
+			}
 
-		while (true) {
 			uint8_t buf[PACKETHEADER_BYTE_SIZE];
 			int bytesReceived = recv(clientSocket, (char*)buf, PACKETHEADER_BYTE_SIZE, 0);
 
 			if (bytesReceived >= (int)PACKETHEADER_BYTE_SIZE) {
-				Packet recvPacket;
-				recvPacket.Deserialize(buf, bytesReceived, true);
+				Packet recvPacket = Packet::Deserialize(buf, bytesReceived, true);
 				PacketType type = recvPacket.getType();
 
 				switch (type) {
 				case PacketType::HANDSHAKE:
 				{
 					std::string response = "Connected";
-					send(clientSocket, response.c_str(), response.size(), 0);
+					send(clientSocket, response.c_str(), (int)response.size(), 0);
 					std::cout << "Handshake successful." << std::endl;
 					break;
 				}
 
 				case PacketType::QUERY_REQUEST:
 				{
-					std::cout << "Client requested airplane data. Querying DB..." << std::endl;
+					std::cout << "Querying DB..." << std::endl;
 					send_all_airplanes_to_client(clientSocket, conn, recvPacket);
 					break;
 				}
@@ -131,6 +117,7 @@ int main() {
 				}
 				}
 			}
+			closesocket(clientSocket);
 		}
 
 	}
