@@ -82,5 +82,5 @@ Packet PacketFactory::Error(uint32_t sequence, ErrorCode code, const std::string
     body["code"] = static_cast<int32_t>(code);
     body["detail"] = detail;
 
-    return Packetize(PacketType::ERROR, sequence, body);
+    return Packetize(PacketType::PACKET_ERROR, sequence, body);
 }

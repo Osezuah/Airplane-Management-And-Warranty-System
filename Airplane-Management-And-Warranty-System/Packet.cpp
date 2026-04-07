@@ -3,7 +3,7 @@
 
 Packet::Packet()
 {
-	this->header.packetType = static_cast<uint8_t>(PacketType::ERROR);
+	this->header.packetType = static_cast<uint8_t>(PacketType::PACKET_ERROR);
 	this->header.payloadLength = 0;
 	this->header.sequenceNumber = 0;
 	this->header.timestamp = 0;
@@ -32,7 +32,7 @@ std::vector<uint8_t> Packet::Serialize()
 	return buffer;
 }
 
-Packet Packet::Deserialize(const uint8_t* data, size_t size)
+Packet Packet::Deserialize(const uint8_t* data, size_t size, bool headerOnly)
 {
 	if (size < PACKETHEADER_BYTE_SIZE)
 		throw std::runtime_error("Buffer too small to contain header.");
@@ -40,6 +40,10 @@ Packet Packet::Deserialize(const uint8_t* data, size_t size)
 	// Copy header
 	Packet packet;
 	std::memcpy(&packet.header, data, PACKETHEADER_BYTE_SIZE);
+
+	if (headerOnly) {
+		return packet;
+	}
 
 	// Check for payload length accuracy
 	const size_t expected = PACKETHEADER_BYTE_SIZE + packet.header.payloadLength;

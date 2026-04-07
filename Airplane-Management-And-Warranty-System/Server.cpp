@@ -4,7 +4,39 @@
 #include <string>
 #include <iostream>
 #include <libpq-fe.h>
-using namespace std;
+#include "..\Airplane-Management-And-Warranty-System\Packet.h"
+#include "..\Airplane-Management-And-Warranty-System\PacketFactory.h"
+
+void send_all_airplanes_to_client(SOCKET clientSocket, PGconn* conn, Packet request) {
+	// Get Header
+	/*std::vector<uint8_t> hBuf(PACKETHEADER_BYTE_SIZE);
+	int hRec = recv(clientSocket, (char*)hBuf.data(), PACKETHEADER_BYTE_SIZE, 0);*/
+
+	/*if (hRec == PACKETHEADER_BYTE_SIZE) {
+		Packet reqHead = Packet::Deserialize(hBuf.data(), hRec);*/
+
+		// If there's a payload, get it (though QUERY_REQUEST is usually just header)
+		/*if (request.getType() == PacketType::QUERY_REQUEST) {*/
+
+		// Database logic
+		PGresult* res = PQexec(conn, "SELECT row_to_json(t) FROM (SELECT * FROM airplanes) t;");
+		int rows = PQntuples(res);
+
+		std::string records = "[";
+		for (int i = 0; i < rows; i++) {
+			records += PQgetvalue(res, i, 0);
+			if (i < rows - 1) records += ",";
+		}
+		records += "]";
+		PQclear(res);
+
+		// Send the response back
+		Packet response = PacketFactory::QueryResponse(request.getSequence(), rows, records);
+		std::vector<uint8_t> out = response.Serialize();
+		send(clientSocket, (const char*)out.data(), (int)out.size(), 0);
+		/*}*/
+	/*}*/
+}
 
 int main() {
 	// Connect to the PostgreSQL database on docker v17.4
@@ -37,24 +69,70 @@ int main() {
 		hint.sin_port = htons(54000);
 		hint.sin_addr.S_un.S_addr = INADDR_ANY;
 
-		bind(serverSocket, (sockaddr*)&hint, sizeof(hint));
-
-		//loop to keep the server constantly running
-		while (1) {
-			listen(serverSocket, SOMAXCONN);
-
-			SOCKET clientSocket = accept(serverSocket, nullptr, nullptr);
-
-			char buf[4096];
-			int bytesReceived = recv(clientSocket, buf, 4096, 0);
-
-			std::string response = "Processed: " + std::string(buf, bytesReceived);
-
-			send(clientSocket, response.c_str(), response.size(), 0);
-
-			cout << response;
+		if (bind(serverSocket, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
+			std::cout << "Bind failed! Error: " << WSAGetLastError() << std::endl;
+			return 1;
 		}
 
-		return 0;
+		if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
+			std::cout << "Listen failed! Error: " << WSAGetLastError() << std::endl;
+			return 1;
+		}
+		SOCKET clientSocket = accept(serverSocket, nullptr, nullptr);
+		//loop to keep the server constantly running
+		while (true) {
+			if (clientSocket != INVALID_SOCKET) {
+				char buf[PACKETHEADER_BYTE_SIZE];
+				int bytesReceived = recv(clientSocket, buf, PACKETHEADER_BYTE_SIZE, 0);
+
+				std::string response = "Connected";
+
+				send(clientSocket, response.c_str(), response.size(), 0);
+
+				std::cout << response << std::endl;
+				break;
+			}
+			else {
+				int err = WSAGetLastError();
+				std::cerr << "Failed to accept client connection with error: " << err << std::endl;
+				continue;
+			}			
+		}
+
+		while (true) {
+			uint8_t buf[PACKETHEADER_BYTE_SIZE];
+			int bytesReceived = recv(clientSocket, (char*)buf, PACKETHEADER_BYTE_SIZE, 0);
+
+			if (bytesReceived >= (int)PACKETHEADER_BYTE_SIZE) {
+				Packet recvPacket;
+				recvPacket.Deserialize(buf, bytesReceived, true);
+				PacketType type = recvPacket.getType();
+
+				switch (type) {
+				case PacketType::HANDSHAKE:
+				{
+					std::string response = "Connected";
+					send(clientSocket, response.c_str(), response.size(), 0);
+					std::cout << "Handshake successful." << std::endl;
+					break;
+				}
+
+				case PacketType::QUERY_REQUEST:
+				{
+					std::cout << "Client requested airplane data. Querying DB..." << std::endl;
+					send_all_airplanes_to_client(clientSocket, conn, recvPacket);
+					break;
+				}
+
+				default:
+				{
+					std::cout << "Unknown Packet Type received: " << (int)type << std::endl;
+					break;
+				}
+				}
+			}
+		}
+
 	}
+	return 0;
 }
