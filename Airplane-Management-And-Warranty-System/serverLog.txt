@@ -82,3 +82,7 @@
 [2026-04-10-19:31:05.921] Client connected and waiting for verification. State: WAITING_FOR_VERIFICATION
 [2026-04-10-19:31:05.924] Handshake authenticated. State: CONNECTED
 [2026-04-10-19:31:05.925] Client disconnected naturally.
+[2026-04-10-20:20:12.927] Server setup finished. Server ON. State: IDLE
+[2026-04-10-20:20:18.236] Client connected and waiting for verification. State: WAITING_FOR_VERIFICATION
+[2026-04-10-20:20:18.239] Handshake authenticated. State: CONNECTED
+[2026-04-10-20:20:18.240] Client disconnected naturally.

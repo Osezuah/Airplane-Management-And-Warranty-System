@@ -8,10 +8,12 @@
     <button onclick="connectToServer()">Connect to TCP Server</button>
     <p id="output"></p>
 
-    <h2>Airplane Fleet Overview</h2>
-    <p id="airplaneList">Connecting to system...</p>
+    <div id="main">
+        <h2>Airplane Fleet Overview</h2>
+        <p id="airplaneList">Connecting to system...</p>
 
-    <div id="airplaneContainer" class="airplane-grid"></div>
+        <div id="airplaneContainer" class="airplane-grid"></div>
+    </div>
 
     <script>
         //function to connect to server via TCP
@@ -61,6 +63,13 @@
                             <p><span class="label">Fuel Capacity (L) Exp:</span> ${plane.fuelcapacityl || 'N/A'}</p>
                             <p><span class="label">Airplane Length (m):</span> ${plane.airplanelengthm || 'N/A'}</p>
                             <p><span class="label">Wing Span (m):</span> ${plane.wingspanm || 'N/A'}</p>
+                             
+                            <div class="card-actions">
+                                <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}')">Maintenance Event</button>
+                                <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
+                                <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}')">Warranty History</button>
+                                <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}')">Warranty Event</button>
+                            </div>
                         </div>
                     `;
                     container.innerHTML += card;
@@ -71,6 +80,22 @@
                 output2.innerText = "Error: " + error;
                 output2.style.color = "red";
             }
+        }
+
+        function handleMaintenanceEvent(id) {
+            console.log("Maintenance Event for:", id);
+        }
+
+        function handleMaintenanceHistory(id) {
+            console.log("Maintenance History for:", id);
+        }
+
+        function handleWarrantyHistory(id) {
+            console.log("Warranty History for:", id);
+        }
+
+        function handleWarrantyEvent(id) {
+            console.log("Warranty Event for:", id);
         }
     </script>
 
@@ -106,6 +131,41 @@
             font-weight: bold;
             color: #555;
         }
+
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap; /* Allows wrapping on small screens */
+            gap: 8px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee; /* Light line to separate from data */
+        }
+
+        .action-link {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #0056b3;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+            .action-link:hover {
+                text-decoration: underline;
+                color: #003d80;
+            }
+
+            .action-link:not(:last-child)::after {
+                content: "||";
+                margin-left: 8px;
+                color: #ccc; /* Lighter color for the bar so it's not distracting */
+                cursor: default;
+                text-decoration: none;
+                display: inline-block;
+            }
     </style>
 
 </BODY>
