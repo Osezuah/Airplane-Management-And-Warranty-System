@@ -5,12 +5,14 @@
 #include "..\Airplane-Management-And-Warranty-System\Packet.h"
 #include "..\Airplane-Management-And-Warranty-System\PacketFactory.h"
 
+#define PAGE_SIZE 4096
+
 //function to connect to serve via TCP sockets by sending a message - client
 std::string send_to_tcp_server(const std::string& message, SOCKET sock) {
 	send(sock, message.c_str(), message.size(), 0);
 
-	char buffer[PACKETHEADER_BYTE_SIZE];
-	int bytesReceived = recv(sock, buffer, PACKETHEADER_BYTE_SIZE, 0);
+	char buffer[PAGE_SIZE];
+	int bytesReceived = recv(sock, buffer, PAGE_SIZE, 0);
 
 	return std::string(buffer, bytesReceived);
 }
@@ -22,8 +24,8 @@ std::string get_all_airplanes_from_server(SOCKET sock) {
 	send(sock, (const char*)serialized.data(), (int)serialized.size(), 0);
 
 	// Read the Header First
-	std::vector<uint8_t> headerBuffer(PACKETHEADER_BYTE_SIZE);
-	int hReceived = recv(sock, (char*)headerBuffer.data(), PACKETHEADER_BYTE_SIZE, 0);
+	std::vector<uint8_t> headerBuffer(PAGE_SIZE);
+	int hReceived = recv(sock, (char*)headerBuffer.data(), PAGE_SIZE, 0);
 
 	Packet tempHeader = Packet::Deserialize(headerBuffer.data(), hReceived, true);
 	uint32_t payloadLen = tempHeader.header.payloadLength;
@@ -47,7 +49,6 @@ std::string get_all_airplanes_from_server(SOCKET sock) {
 }
 
 int main() {
-	//SPRINT # 1 
 	//Airplane Management and Warranty System API Webserver
 	// Connect to the PostgreSQL database on docker v17.4
 	PGconn* conn = PQconnectdb(
@@ -71,26 +72,36 @@ int main() {
 	});
 
 	//route to connect to server via TCP sockets
-	CROW_ROUTE(app, "/connect-to-tcp-server").methods("POST"_method)
-		([](const crow::request& req) {
+	CROW_ROUTE(app, "/connect-to-tcp-server")([]() {	
+
 			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 			sockaddr_in serverAddr{};
 			serverAddr.sin_family = AF_INET;
-			serverAddr.sin_port = htons(54000);
+			serverAddr.sin_port = htons(27000);
 			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
 		
-			Packet handshake = PacketFactory::Handshake(1, "client", "1111"); 
-			std::vector<uint8_t> out = handshake.Serialize();
+			Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client"); 
+			std::vector<uint8_t> txData = handshakePacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);
 
-			send(sock, (const char*)out.data(), (int)out.size(), 0);
+			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			//outputPacket = PacketFactory::HandshakeAck(inputPacket.getSequence(), true, "SESSION_VALID");
+			//send(clientSocket, (char*)txData.data(), txData.size(), 0);
+					
+			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+			Packet inputPacket = Packet::Deserialize(rxBuffer.data(), bytesReceived, false);
+			crow::json::rvalue data = crow::json::load(inputPacket.payloadString());
 
-			char buffer[PACKETHEADER_BYTE_SIZE];
-			int bytes = recv(sock, buffer, PACKETHEADER_BYTE_SIZE, 0);
-			std::string tcpResponse(buffer, bytes);
+			if (!data) {
+				std::cerr << "Invalid JSON received from TCP server." << std::endl;
+			}
+			std::string success = data["sessionToken"].s();
+			std::cout << "Handshake response received. Session Token: " << success << std::endl;
 			closesocket(sock);
-			return crow::response("{\"status\": \"" + tcpResponse + "\"}");
+			return "CONNECTED";
 		});
 
 	//route to access airplanes in database
@@ -99,7 +110,7 @@ int main() {
 			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 			sockaddr_in serverAddr{};
 			serverAddr.sin_family = AF_INET;
-			serverAddr.sin_port = htons(54000);
+			serverAddr.sin_port = htons(27000);
 			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));

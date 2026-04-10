@@ -20,7 +20,7 @@
             output.innerText = "Status: Initializing Handshake...";
             output.style.color = "orange";
   
-            const res = await fetch("http://localhost:8080/connect-to-tcp-server", { method: "POST" });
+            const res = await fetch("http://localhost:8080/connect-to-tcp-server");
 
             if (res.ok) {
                 output.innerText = "Status: Connected to TCP Server";
@@ -70,7 +70,8 @@
 
                 output2.innerText = `Showing ${packet.totalCount} Airplanes`;
             } catch (error) {
-                document.getElementById("output").innerText = "Error: " + error;
+                output2.innerText = "Error: " + error;
+                output2.style.color = "red";
             }
         }
     </script>
