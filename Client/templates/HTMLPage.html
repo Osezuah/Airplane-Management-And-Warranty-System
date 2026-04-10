@@ -40,16 +40,14 @@
             const container = document.getElementById("airplaneContainer"); 
             const output2 = document.getElementById("airplaneList");
             try {
-                const resp = await fetch("http://localhost:8080/list/airplane"); 
-                const packet = await resp.json();
-
-                //const packet = JSON.parse(rawData);
-                console.log("Packet Object:", packet);
-
-                const airplanes = JSON.parse(packet.records);
-                console.log("Parsed Airplanes Array:", airplanes);
-
+                const res = await fetch("http://localhost:8080/airplanes"); 
                 container.innerHTML = ""; // Clear loader
+                if (!res.ok) {
+                    throw new Error(`Server responded with status ${res.status}`);
+                }
+
+                const result = await res.json();
+                const airplanes = result.data;
 
                 airplanes.forEach(plane => {
                     const card = `
@@ -68,7 +66,7 @@
                     container.innerHTML += card;
                 });
 
-                output2.innerText = `Showing ${packet.totalCount} Airplanes`;
+                output2.innerText = '';
             } catch (error) {
                 output2.innerText = "Error: " + error;
                 output2.style.color = "red";

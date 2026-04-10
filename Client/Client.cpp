@@ -91,42 +91,64 @@ int main() {
 			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-			
-			//recv
-			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
-			//outputPacket = PacketFactory::HandshakeAck(inputPacket.getSequence(), true, "SESSION_VALID");
-			//send(clientSocket, (char*)txData.data(), txData.size(), 0);
-			
-			//send
-			/*Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client");
-			std::vector<uint8_t> txData = handshakePacket.Serialize();
-			send(sock, (char*)txData.data(), txData.size(), 0);*/
-
 			handshake_with_tcp_server(sock);
 			closesocket(sock);
 			return "";
 	});
 
 	//route to access airplanes in database
-	CROW_ROUTE(app, "/list/airplane")([]() {
-			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	CROW_ROUTE(app, "/airplanes")([conn]() {
+			/*SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 			sockaddr_in serverAddr{};
 			serverAddr.sin_family = AF_INET;
 			serverAddr.sin_port = htons(27000);
 			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
+			handshake_with_tcp_server(sock);*/
 
-			handshake_with_tcp_server(sock);
-
+			//recv
 			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
 			//outputPacket = PacketFactory::HandshakeAck(inputPacket.getSequence(), true, "SESSION_VALID");
 			//send(clientSocket, (char*)txData.data(), txData.size(), 0);
+
+			//send
+			/*Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client");
+			std::vector<uint8_t> txData = handshakePacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);*/
 			
-			closesocket(sock);
-		//return crow::response(airplanesJson);
-			return "";
-		});
+			const char* command = "SELECT * FROM Airplane";
+			PGresult* result = PQexec(conn, command);
+
+			if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+				PQclear(result);
+				return crow::response(500, "Database Query Failed");
+			}
+
+			int rows = PQntuples(result);
+			int cols = PQnfields(result);
+
+			std::vector<crow::json::wvalue> airplaneList;
+
+			for (int i = 0; i < rows; i++) {
+				crow::json::wvalue airplane;
+				for (int j = 0; j < cols; j++) {
+					// Get column name and value
+					std::string colName = PQfname(result, j);
+					std::string val = PQgetvalue(result, i, j);
+					airplane[colName] = val;
+				}
+				airplaneList.push_back(std::move(airplane));
+			}
+
+			// 3. Clean up and return
+			PQclear(result);
+			crow::json::wvalue finalResponse;
+			finalResponse["data"] = std::move(airplaneList);
+
+			//closesocket(sock);
+			return crow::response(finalResponse);
+	});
 
 	// Start the server on port 8080
 	app.port(8080).multithreaded().run();
