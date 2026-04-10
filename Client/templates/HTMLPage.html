@@ -65,7 +65,7 @@
                             <p><span class="label">Wing Span (m):</span> ${plane.wingspanm || 'N/A'}</p>
                              
                             <div class="card-actions">
-                                <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}')">Maintenance Event</button>
+                                <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}', '${plane.name}')">Maintenance Event</button>
                                 <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
                                 <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}')">Warranty History</button>
                                 <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}')">Warranty Event</button>
@@ -81,19 +81,61 @@
                 output2.style.color = "red";
             }
         }
+        //maintenance event handler function to be called when the maintenance event button is clicked for an airplane card
+        function handleMaintenanceEvent(id, name) {
+            console.log("Maintenance Event for:", id + " " + name);
+            const container = document.getElementById("main"); 
+            const form = `
+                <h2>Maintenance Event for Airplane ${name}</h2>
+                <form id="maintenanceForm">
+                <label for="eventType">Maintenance Event Type:</label><br>
+                <select id="eventType">
+                    <option value="">Select a type</option>
+                    <option value="Inspection">Inspection</option>
+                    <option value="Repair">Repair</option>
+                    <option value="Oil Change">Oil Change</option>
+                </select><br><br>
+                    <label for="description">Description:</label><br>
+                    <textarea id="description" placeholder="Description"></textarea><br><br>
+                    <button type="submit">Submit Maintenance Event</button>
+                </form>
+            `;
+            container.innerHTML = form;
 
-        function handleMaintenanceEvent(id) {
-            console.log("Maintenance Event for:", id);
+            document.getElementById('maintenanceForm').addEventListener('submit', async (e) => { e.preventDefault();
+
+                const eventData = {
+                    airplaneID: id,
+                    technicianID: "1",
+                    eventType: document.getElementById('eventType').value,
+                    description: document.getElementById('description').value
+                };
+                try {
+                    const response = await fetch('http://localhost:8080/maintenance_event', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+
+                    const result = await response.text();
+                    alert(result);
+                } catch (err) {
+                    console.error("Fetch error:", err);
+                }
+            });
         }
 
+        //maintenance history event handler function to be called when the maintenance history button is clicked for an airplane card
         function handleMaintenanceHistory(id) {
             console.log("Maintenance History for:", id);
         }
 
+        //warranty history event handler function to be called when the warranty history button is clicked for an airplane card
         function handleWarrantyHistory(id) {
             console.log("Warranty History for:", id);
         }
 
+        //warranty event handler function to be called when the warranty event button is clicked for an airplane card
         function handleWarrantyEvent(id) {
             console.log("Warranty Event for:", id);
         }

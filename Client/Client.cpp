@@ -165,21 +165,26 @@ int main() {
 			return crow::response(400, "Invalid JSON data received");
 		}
 
-		int airplaneID = Body["airplaneID"].i();
-		std::string technicianID = Body["technicianID"].s();
-		std::string type = Body["eventType"].s();
-		std::string desc = Body["description"].s();
+		try {
+			int airplaneID = Body["airplaneID"].i();
+			std::string technicianID = Body["technicianID"].s();
+			std::string type = Body["eventType"].s();
+			std::string desc = Body["description"].s();
 
-		//send
-		Packet maintenancePacket = PacketFactory::MaintenanceEvent(1, airplaneID, technicianID, type, desc);
-		std::vector<uint8_t> txData = maintenancePacket.Serialize();
-		send(sock, (char*)txData.data(), txData.size(), 0);
+			//send
+			Packet maintenancePacket = PacketFactory::MaintenanceEvent(1, airplaneID, technicianID, type, desc);
+			std::vector<uint8_t> txData = maintenancePacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);
 
-		//recv
-		std::vector<uint8_t> rxBuffer(PAGE_SIZE);
-		int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+			//recv
+			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
 
-		return crow::response(200, "Maintenance Event sent");
+			return crow::response(200, "Maintenance Event sent successfully");
+		}
+		catch (const std::exception& e) {
+			return crow::response(400, "Error processing request: " + std::string(e.what()));
+		}
 	});
 
 	// Start the server on port 8080
