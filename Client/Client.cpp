@@ -7,14 +7,24 @@
 
 #define PAGE_SIZE 4096
 
-//function to connect to serve via TCP sockets by sending a message - client
-std::string send_to_tcp_server(const std::string& message, SOCKET sock) {
-	send(sock, message.c_str(), message.size(), 0);
+//function to connect to server via TCP sockets and perform handshake, returning session token if successful
+void handshake_with_tcp_server(SOCKET sock) {
+	//send 
+	Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client");
+	std::vector<uint8_t> txData = handshakePacket.Serialize();
+	send(sock, (char*)txData.data(), txData.size(), 0);
 
-	char buffer[PAGE_SIZE];
-	int bytesReceived = recv(sock, buffer, PAGE_SIZE, 0);
+	//recv
+	std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+	int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+	Packet inputPacket = Packet::Deserialize(rxBuffer.data(), bytesReceived, false);
+	crow::json::rvalue data = crow::json::load(inputPacket.payloadString());
 
-	return std::string(buffer, bytesReceived);
+	if (!data) {
+		std::cerr << "Invalid JSON received from TCP server." << std::endl;
+	}
+	std::string success = data["sessionToken"].s();
+	std::cout << "Handshake response received. Session Token: " << success << std::endl;
 }
 
 std::string get_all_airplanes_from_server(SOCKET sock) {
@@ -81,32 +91,24 @@ int main() {
 			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-		
-			Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client"); 
-			std::vector<uint8_t> txData = handshakePacket.Serialize();
-			send(sock, (char*)txData.data(), txData.size(), 0);
-
+			
+			//recv
 			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
 			//outputPacket = PacketFactory::HandshakeAck(inputPacket.getSequence(), true, "SESSION_VALID");
 			//send(clientSocket, (char*)txData.data(), txData.size(), 0);
-					
-			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
-			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
-			Packet inputPacket = Packet::Deserialize(rxBuffer.data(), bytesReceived, false);
-			crow::json::rvalue data = crow::json::load(inputPacket.payloadString());
+			
+			//send
+			/*Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client");
+			std::vector<uint8_t> txData = handshakePacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);*/
 
-			if (!data) {
-				std::cerr << "Invalid JSON received from TCP server." << std::endl;
-			}
-			std::string success = data["sessionToken"].s();
-			std::cout << "Handshake response received. Session Token: " << success << std::endl;
+			handshake_with_tcp_server(sock);
 			closesocket(sock);
-			return "CONNECTED";
-		});
+			return "";
+	});
 
 	//route to access airplanes in database
-	CROW_ROUTE(app, "/list/airplane").methods("GET"_method)
-		([]() {
+	CROW_ROUTE(app, "/list/airplane")([]() {
 			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 			sockaddr_in serverAddr{};
 			serverAddr.sin_family = AF_INET;
@@ -115,9 +117,15 @@ int main() {
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
 
-			std::string airplanesJson = get_all_airplanes_from_server(sock);
+			handshake_with_tcp_server(sock);
+
+			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			//outputPacket = PacketFactory::HandshakeAck(inputPacket.getSequence(), true, "SESSION_VALID");
+			//send(clientSocket, (char*)txData.data(), txData.size(), 0);
+			
 			closesocket(sock);
-			return crow::response(airplanesJson);
+		//return crow::response(airplanesJson);
+			return "";
 		});
 
 	// Start the server on port 8080

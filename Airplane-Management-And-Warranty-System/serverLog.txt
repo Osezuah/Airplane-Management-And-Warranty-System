@@ -60,3 +60,9 @@
 [2026-04-10-18:51:35.178] Client connected and waiting for verification. State: WAITING_FOR_VERIFICATION
 [2026-04-10-18:51:35.178] Failed to authenticate. Wrong packet type received.
 [2026-04-10-18:51:35.178] Server error triggered. Resetting connection...
+[2026-04-10-19:03:58.746] Server setup finished. Server ON. State: IDLE
+[2026-04-10-19:04:07.946] Client connected and waiting for verification. State: WAITING_FOR_VERIFICATION
+[2026-04-10-19:04:07.950] Handshake authenticated. State: CONNECTED
+[2026-04-10-19:04:07.951] Client disconnected naturally.
+[2026-04-10-19:04:07.955] Client connected and waiting for verification. State: WAITING_FOR_VERIFICATION
+[2026-04-10-19:04:07.955] Client disconnected naturally.
