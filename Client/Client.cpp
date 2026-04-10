@@ -180,9 +180,11 @@ int main() {
 			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
 			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
 
+			closesocket(sock);
 			return crow::response(200, "Maintenance Event sent successfully");
 		}
 		catch (const std::exception& e) {
+			closesocket(sock);
 			return crow::response(400, "Error processing request: " + std::string(e.what()));
 		}
 	});

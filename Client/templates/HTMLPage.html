@@ -15,13 +15,18 @@
         <div id="airplaneContainer" class="airplane-grid"></div>
     </div>
 
+    <dialog id="statusModal">
+        <p id="modalMessage"></p>
+        <button id="closeBtn">OK</button>
+    </dialog>
+
     <script>
         //function to connect to server via TCP
         async function connectToServer() {
             const output = document.getElementById("output");
             output.innerText = "Status: Initializing Handshake...";
             output.style.color = "orange";
-  
+
             const res = await fetch("http://localhost:8080/connect-to-tcp-server");
 
             if (res.ok) {
@@ -34,15 +39,15 @@
                 output.innerText = "Status: Handshake Failed - Unexpected Response";
                 output.style.color = "red";
             }
-            
+
         }
 
         // function to load airplane data from server and display it on the page
         async function loadAirplanes() {
-            const container = document.getElementById("airplaneContainer"); 
+            const container = document.getElementById("airplaneContainer");
             const output2 = document.getElementById("airplaneList");
             try {
-                const res = await fetch("http://localhost:8080/airplanes"); 
+                const res = await fetch("http://localhost:8080/airplanes");
                 container.innerHTML = ""; // Clear loader
                 if (!res.ok) {
                     throw new Error(`Server responded with status ${res.status}`);
@@ -53,25 +58,25 @@
 
                 airplanes.forEach(plane => {
                     const card = `
-                        <div class="card">
-                            <h3>${plane.name || 'Unknown Model'}</h3>
-                            <p><span class="label">ID:</span> ${plane.airplaneid}</p>
-                            <p><span class="label">Manufacturer:</span> ${plane.manufacturer || 'N/A'}</p>
-                            <p><span class="label">Engines:</span> ${plane.engines || 0}</p>
-                            <p><span class="label">Range:</span> ${plane.rangekm || 'Never'}</p>
-                            <p><span class="label">Cargo Capacity (Kg):</span> ${plane.cargocapacitykg || 'Active'}</p>
-                            <p><span class="label">Fuel Capacity (L) Exp:</span> ${plane.fuelcapacityl || 'N/A'}</p>
-                            <p><span class="label">Airplane Length (m):</span> ${plane.airplanelengthm || 'N/A'}</p>
-                            <p><span class="label">Wing Span (m):</span> ${plane.wingspanm || 'N/A'}</p>
-                             
-                            <div class="card-actions">
-                                <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}', '${plane.name}')">Maintenance Event</button>
-                                <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
-                                <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}')">Warranty History</button>
-                                <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}')">Warranty Event</button>
+                            <div class="card">
+                                <h3>${plane.name || 'Unknown Model'}</h3>
+                                <p><span class="label">ID:</span> ${plane.airplaneid}</p>
+                                <p><span class="label">Manufacturer:</span> ${plane.manufacturer || 'N/A'}</p>
+                                <p><span class="label">Engines:</span> ${plane.engines || 0}</p>
+                                <p><span class="label">Range:</span> ${plane.rangekm || 'Never'}</p>
+                                <p><span class="label">Cargo Capacity (Kg):</span> ${plane.cargocapacitykg || 'Active'}</p>
+                                <p><span class="label">Fuel Capacity (L) Exp:</span> ${plane.fuelcapacityl || 'N/A'}</p>
+                                <p><span class="label">Airplane Length (m):</span> ${plane.airplanelengthm || 'N/A'}</p>
+                                <p><span class="label">Wing Span (m):</span> ${plane.wingspanm || 'N/A'}</p>
+
+                                <div class="card-actions">
+                                    <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}', '${plane.name}')">Maintenance Event</button>
+                                    <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
+                                    <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}')">Warranty History</button>
+                                    <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}')">Warranty Event</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
+                        `;
                     container.innerHTML += card;
                 });
 
@@ -84,25 +89,26 @@
         //maintenance event handler function to be called when the maintenance event button is clicked for an airplane card
         function handleMaintenanceEvent(id, name) {
             console.log("Maintenance Event for:", id + " " + name);
-            const container = document.getElementById("main"); 
+            const container = document.getElementById("main");
             const form = `
-                <h2>Maintenance Event for Airplane ${name}</h2>
-                <form id="maintenanceForm">
-                <label for="eventType">Maintenance Event Type:</label><br>
-                <select id="eventType">
-                    <option value="">Select a type</option>
-                    <option value="Inspection">Inspection</option>
-                    <option value="Repair">Repair</option>
-                    <option value="Oil Change">Oil Change</option>
-                </select><br><br>
-                    <label for="description">Description:</label><br>
-                    <textarea id="description" placeholder="Description"></textarea><br><br>
-                    <button type="submit">Submit Maintenance Event</button>
-                </form>
-            `;
+                    <h2>Maintenance Event for Airplane ${name}</h2>
+                    <form id="maintenanceForm">
+                    <label for="eventType">Maintenance Event Type:</label><br>
+                    <select id="eventType">
+                        <option value="">Select a type</option>
+                        <option value="Inspection">Inspection</option>
+                        <option value="Repair">Repair</option>
+                        <option value="Oil Change">Oil Change</option>
+                    </select><br><br>
+                        <label for="description">Description:</label><br>
+                        <textarea id="description" placeholder="Description"></textarea><br><br>
+                        <button type="submit">Submit Maintenance Event</button>
+                    </form>
+                `;
             container.innerHTML = form;
 
-            document.getElementById('maintenanceForm').addEventListener('submit', async (e) => { e.preventDefault();
+            document.getElementById('maintenanceForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
 
                 const eventData = {
                     airplaneID: id,
@@ -118,7 +124,23 @@
                     });
 
                     const result = await response.text();
-                    alert(result);
+
+                    const modal = document.getElementById('statusModal');
+                    const msg = document.getElementById('modalMessage');
+                    const btn = document.getElementById('closeBtn');
+
+                    msg.textContent = result;
+                    modal.showModal();
+                    btn.onclick = () => {
+                        modal.close();
+                        container.innerHTML = "";
+                        const page1 = ` <h2>Airplane Fleet Overview</h2>
+                                        <p id="airplaneList">Connecting to system...</p>
+                                        <div id="airplaneContainer" class="airplane-grid"></div>`;
+                        container.innerHTML = page1 // Reset main container content
+                        loadAirplanes(); // Refresh the airplane list after submitting the maintenance event
+                    };
+
                 } catch (err) {
                     console.error("Fetch error:", err);
                 }
@@ -141,7 +163,7 @@
         }
     </script>
 
-    
+
     <style>
         /*CSS for styling the airplane cards and grid layout*/
         .airplane-grid {
