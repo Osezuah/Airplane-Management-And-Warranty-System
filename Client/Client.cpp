@@ -170,6 +170,67 @@ int main() {
 		}
 	});
 
+	CROW_ROUTE(app, "/warranty_event").methods("POST"_method)([conn](const crow::request& req) {
+		Logger logger("client_log.txt");
+		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+		sockaddr_in serverAddr{};
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_port = htons(27000);
+		inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
+
+		connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
+		handshake_with_tcp_server(sock);
+		logger.Log("Connected to TCP server and completed handshake.");
+
+		auto Body = crow::json::load(req.body);
+		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
+			return crow::response(400, "Invalid JSON data received");
+		}
+
+		try {
+			int airplaneID = Body["airplaneID"].i();
+			std::string technicianID = Body["technicianID"].s();
+			std::string imageBytes = Body["imageBytes"].s();
+			std::string desc = Body["description"].s();
+			int warrantyID = 0;
+
+			const char* command = "SELECT WarrantyID FROM Warranty WHERE AirplaneID_FK = $1";
+			std::string airplaneIDStr = std::to_string(airplaneID);
+			const char* parameters[1] = { airplaneIDStr.c_str() };
+			PGresult* result = PQexecParams(conn, command, 1, NULL, parameters, NULL, NULL, 0);
+			if (PQntuples(result) > 0) {
+				char* val = PQgetvalue(result, 0, 0);
+				int warrantyID = std::stoi(val);
+			}
+			else {
+				closesocket(sock);
+				logger.Log("Disconnected from the TCP server; closed socket");
+				return crow::response(500, "WarrantyID not found in DB");
+			}
+
+			//send
+			Packet warrantyPacket = PacketFactory::WarrantyEvent(1, airplaneID, technicianID, warrantyID, desc, imageBytes);
+			std::vector<uint8_t> txData = warrantyPacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);
+			logger.Log("Sent warranty event packet to tcp server");
+
+			//recv
+			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+			logger.Log("Received warranty event packet acknowledgement from tcp server");
+
+			closesocket(sock);
+			logger.Log("Disconnected from the TCP server; closed socket");
+			return crow::response(200, "Warranty Event sent successfully");
+		}
+		catch (const std::exception& e) {
+			closesocket(sock);
+			logger.Log("Disconnected from the TCP server; closed socket");
+			return crow::response(400, "Error processing request: " + std::string(e.what()));
+		}
+
+	});
+
 	// Start the server on port 8080
 	app.port(8080).multithreaded().run();
 
