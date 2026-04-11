@@ -30,6 +30,9 @@
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\TimeUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Airplane-Management-And-Warranty-System\Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\Packet.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\TimeUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Airplane-Management-And-Warranty-System\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

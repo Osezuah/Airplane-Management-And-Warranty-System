@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Airplane-Management-And-Warranty-System\Logger.cpp" />
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\Packet.cpp" />
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\PacketFactory.cpp" />
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\SequenceCounter.cpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="Client.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Airplane-Management-And-Warranty-System\Logger.h" />
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\Packet.h" />
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\PacketFactory.h" />
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\SequenceCounter.h" />

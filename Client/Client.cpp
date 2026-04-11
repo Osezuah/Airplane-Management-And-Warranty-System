@@ -4,6 +4,7 @@
 #include <winsock.h>
 #include "..\Airplane-Management-And-Warranty-System\Packet.h"
 #include "..\Airplane-Management-And-Warranty-System\PacketFactory.h"
+#include "..\Airplane-Management-And-Warranty-System\Logger.h"
 
 #define PAGE_SIZE 4096
 
@@ -25,37 +26,6 @@ void handshake_with_tcp_server(SOCKET sock) {
 	}
 	std::string success = data["sessionToken"].s();
 	std::cout << "Handshake response received. Session Token: " << success << std::endl;
-}
-
-std::string get_all_airplanes_from_server(SOCKET sock) {
-	// Create and Serialize Request
-	Packet request = PacketFactory::QueryRequest(1, 0);
-	std::vector<uint8_t> serialized = request.Serialize();
-	send(sock, (const char*)serialized.data(), (int)serialized.size(), 0);
-
-	// Read the Header First
-	std::vector<uint8_t> headerBuffer(PAGE_SIZE);
-	int hReceived = recv(sock, (char*)headerBuffer.data(), PAGE_SIZE, 0);
-
-	Packet tempHeader = Packet::Deserialize(headerBuffer.data(), hReceived, true);
-	uint32_t payloadLen = tempHeader.header.payloadLength;
-
-	// Read the Payload
-	std::vector<uint8_t> fullPacket = headerBuffer;
-	if (payloadLen > 0) {
-		std::vector<uint8_t> payloadBuffer(payloadLen);
-		int pReceived = 0;
-		while (pReceived < (int)payloadLen) {
-			int r = recv(sock, (char*)payloadBuffer.data() + pReceived, payloadLen - pReceived, 0);
-			if (r <= 0) break;
-			pReceived += r;
-		}
-		// Add the payload to the end of the header bytes
-		fullPacket.insert(fullPacket.end(), payloadBuffer.begin(), payloadBuffer.end());
-	}
-
-	Packet finalPacket = Packet::Deserialize(fullPacket.data(), fullPacket.size(), false);
-	return finalPacket.payloadString();
 }
 
 int main() {
@@ -83,6 +53,7 @@ int main() {
 
 	//route to connect to server via TCP sockets
 	CROW_ROUTE(app, "/connect-to-tcp-server")([]() {	
+			Logger logger("client_log.txt");
 
 			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 			sockaddr_in serverAddr{};
@@ -92,7 +63,9 @@ int main() {
 
 			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
 			handshake_with_tcp_server(sock);
+			logger.Log("Connected to TCP server and completed handshake.");
 			closesocket(sock);
+			logger.Log("Disconnected from the TCP server; closed socket");
 			return "";
 	});
 
@@ -116,7 +89,7 @@ int main() {
 			/*Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client");
 			std::vector<uint8_t> txData = handshakePacket.Serialize();
 			send(sock, (char*)txData.data(), txData.size(), 0);*/
-			
+			Logger logger("client_log.txt");
 			const char* command = "SELECT * FROM Airplane";
 			PGresult* result = PQexec(conn, command);
 
@@ -146,11 +119,14 @@ int main() {
 			crow::json::wvalue finalResponse;
 			finalResponse["data"] = std::move(airplaneList);
 
+			logger.Log("Retrieved all airplanes from database.");
+
 			//closesocket(sock);
 			return crow::response(finalResponse);
 	});
 
 	CROW_ROUTE(app, "/maintenance_event").methods("POST"_method)([](const crow::request& req) {
+		Logger logger("client_log.txt");
 		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 		sockaddr_in serverAddr{};
 		serverAddr.sin_family = AF_INET;
@@ -159,6 +135,7 @@ int main() {
 
 		connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
 		handshake_with_tcp_server(sock);
+		logger.Log("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
 		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
@@ -175,16 +152,20 @@ int main() {
 			Packet maintenancePacket = PacketFactory::MaintenanceEvent(1, airplaneID, technicianID, type, desc);
 			std::vector<uint8_t> txData = maintenancePacket.Serialize();
 			send(sock, (char*)txData.data(), txData.size(), 0);
+			logger.Log("Sent maintenance event packet to tcp server");
 
 			//recv
 			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
 			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+			logger.Log("Received maintenance event packet acknowledgement from tcp server");
 
 			closesocket(sock);
+			logger.Log("Disconnected from the TCP server; closed socket");
 			return crow::response(200, "Maintenance Event sent successfully");
 		}
 		catch (const std::exception& e) {
 			closesocket(sock);
+			logger.Log("Disconnected from the TCP server; closed socket");
 			return crow::response(400, "Error processing request: " + std::string(e.what()));
 		}
 	});
