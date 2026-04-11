@@ -14,7 +14,7 @@ enum class PacketType : uint8_t {
     HANDSHAKE_ACK = 0x02,     // Servr -> Client / Server accepted and authenticated client
     MAINTENANCE_EVENT = 0x10, // Client -> Server / Client submits maintenance report
     WARRANTY_EVENT = 0x20,    // Client -> Server / Client submits warranty report
-    QUERY_REQUEST = 0x20,     // Client -> Server / Client request airlplane record
+    QUERY_REQUEST = 0x25,     // Client -> Server / Client request airlplane record
     QUERY_RESPONSE = 0x21,    // Server -> Client / Server responds with record
     REPORT_REQUEST = 0x30,    // Client -> Server / Client requests warranty record
     REPORT_DATA = 0x31,       // Server -> Client / Server responds with warranty
