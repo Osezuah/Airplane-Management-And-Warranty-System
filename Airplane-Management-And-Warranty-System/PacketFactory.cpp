@@ -37,6 +37,18 @@ Packet PacketFactory::MaintenanceEvent(uint32_t sequence, int airplaneID, const 
     return Packetize(PacketType::MAINTENANCE_EVENT, sequence, body);
 }
 
+Packet PacketFactory::WarrantyEvent(uint32_t sequence, int airplaneID, const std::string& technicianID, int warrantyID, const std::string& description, const std::string& imageBytes)
+{
+    crow::json::wvalue body;
+    body["airplaneID"] = airplaneID;
+    body["technicianID"] = technicianID;
+    body["warrantyID"] = warrantyID;
+    body["description"] = description;
+    body["imageBytes"] = imageBytes;
+
+    return Packetize(PacketType::WARRANTY_EVENT, sequence, body);
+}
+
 Packet PacketFactory::QueryRequest(uint32_t sequence, int airplaneID)
 {
     crow::json::wvalue body;

@@ -22,6 +22,9 @@ public:
     // Maintenance Event Submission
     static Packet MaintenanceEvent(uint32_t sequence, int airplaneID, const std::string& technician, const std::string& eventType, const std::string& description);
 
+    //Warranty Event Submission
+    static Packet WarrantyEvent(uint32_t sequence, int airplaneID, const std::string& technicianID, int warrantyID, const std::string& description, const std::string& imageBytes);
+
     // Aircraft Record History
     static Packet QueryRequest(uint32_t sequence, int airplaneID);
     static Packet QueryResponse(uint32_t sequence, int totalCount, const std::string& records);

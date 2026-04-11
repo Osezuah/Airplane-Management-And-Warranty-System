@@ -191,6 +191,33 @@ int main() {
 							// Reset state
 							stateMachine.TransitionStateTo(ServerState::CONNECTED);
 						}
+						else if (inputPacket.getType() == PacketType::WARRANTY_EVENT) {
+							logger.Log("Processing Warranty Event.");
+
+							//extract values
+							std::string technicianID = std::to_string(data["technicianID"].i());
+							std::string airplaneID = std::to_string(data["airplaneID"].i());
+							std::string warrantyID = std::to_string(data["warrantyID"].i());
+							std::string description = data["description"].s();
+							std::string imageBytes = data["imageBytes"].s();
+
+							//Handle writing to DB
+							const char* command = "INSERT INTO WarrantyEvent (WarrantyID_FK, TechnicianID_FK, AirplaneID_FK, Description, Image) VALUES ($1, $2, $3, $4, $5)";
+							const char* parameters[5] = { technicianID.c_str(), airplaneID.c_str(), warrantyID.c_str(), description.c_str(), imageBytes.c_str() };
+							PGresult* result = PQexecParams(conn, command, 5, NULL, parameters, NULL, NULL, 0);
+							if (PQresultStatus(result) != PGRES_COMMAND_OK) {
+								logger.Log("DB Error: " + std::string(PQerrorMessage(conn)));
+								outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::INTERNAL, "Could not write to DB.");
+							}
+							else {
+								logger.Log("Wrote to DB. Data: " + technicianID + "/" + airplaneID + "/" + warrantyID + "/" + description + "/" + imageBytes);
+								outputPacket = PacketFactory::Ack(inputPacket.getSequence());
+							}
+							PQclear(result);
+
+							// Reset state
+							stateMachine.TransitionStateTo(ServerState::CONNECTED);
+						}
 						else if (inputPacket.getType() == PacketType::QUERY_REQUEST) {
 							std::string airplaneID = std::to_string(data["airplaneID"].i());
 
