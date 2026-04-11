@@ -73,7 +73,7 @@
                                     <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}', '${plane.name}')">Maintenance Event</button>
                                     <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
                                     <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}')">Warranty History</button>
-                                    <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}')">Warranty Event</button>
+                                    <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}', '${plane.name}')">Warranty Event</button>
                                 </div>
                             </div>
                         `;
@@ -158,8 +158,70 @@
         }
 
         //warranty event handler function to be called when the warranty event button is clicked for an airplane card
-        function handleWarrantyEvent(id) {
+        function handleWarrantyEvent(id, name) {
             console.log("Warranty Event for:", id);
+            const container = document.getElementById("main");
+            const form = `
+                        <h2>Warranty Event for Airplane ${name}</h2>
+                        <form id="warrantyEventForm" enctype="multipart/form-data">
+                            <label for="description">Description:</label><br>
+                            <textarea id="description" placeholder="Description" required></textarea><br><br>
+                            <label for="img">Select Image (Max 1MB):</label><br>
+                            <input type="file" id="imgFile" name="image_file" accept="image/*" required><br><br>
+                            <button type="submit">Submit Warranty Event</button>
+                        </form>
+                        `;
+            container.innerHTML = form;
+
+            document.getElementById('warrantyEventForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                //img file handling - Convert file to Base64 string
+                const file = document.getElementById('imgFile').files[0];
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = async () => {
+                    const base64Data = reader.result.split(',')[1];
+
+                    //payload
+                    const eventData = {
+                        airplaneID: id,
+                        technicianID: "1",
+                        description: document.getElementById('description').value,
+                        imageBytes: base64Data
+                    };
+                }
+                               
+                try {
+                    const response = await fetch('http://localhost:8080/warranty_event', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+
+                    const result = await response.text();
+
+                    const modal = document.getElementById('statusModal');
+                    const msg = document.getElementById('modalMessage');
+                    const btn = document.getElementById('closeBtn');
+
+                    msg.textContent = result;
+                    modal.showModal();
+                    btn.onclick = () => {
+                        modal.close();
+                        container.innerHTML = "";
+                        const page1 = ` <h2>Airplane Fleet Overview</h2>
+                            <p id="airplaneList">Connecting to system...</p>
+                            <div id="airplaneContainer" class="airplane-grid"></div>`;
+                        container.innerHTML = page1 // Reset main container content
+                        loadAirplanes(); // Refresh the airplane list after submitting the maintenance event
+                    };
+
+                } catch (err) {
+                    console.error("Fetch error:", err);
+                }
+            });
+
         }
     </script>
 

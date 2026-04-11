@@ -29,6 +29,8 @@ void handshake_with_tcp_server(SOCKET sock) {
 }
 
 int main() {
+	//copy http://localhost:8080 to search bar
+
 	//Airplane Management and Warranty System API Webserver
 	// Connect to the PostgreSQL database on docker v17.4
 	PGconn* conn = PQconnectdb(
@@ -190,9 +192,16 @@ int main() {
 		try {
 			int airplaneID = Body["airplaneID"].i();
 			std::string technicianID = Body["technicianID"].s();
-			std::string imageBytes = Body["imageBytes"].s();
+			std::string encoded_imageBytes = Body["imageBytes"].s();
 			std::string desc = Body["description"].s();
 			int warrantyID = 0;
+
+			//decode base64 bytes 
+			std::string decoded_imageBytes = crow::utility::base64decode(encoded_imageBytes);
+
+			if (decoded_imageBytes.empty()) {
+				return crow::response(400, "Base64 decoding failed");
+			}
 
 			const char* command = "SELECT WarrantyID FROM Warranty WHERE AirplaneID_FK = $1";
 			std::string airplaneIDStr = std::to_string(airplaneID);
@@ -209,7 +218,7 @@ int main() {
 			}
 
 			//send
-			Packet warrantyPacket = PacketFactory::WarrantyEvent(1, airplaneID, technicianID, warrantyID, desc, imageBytes);
+			Packet warrantyPacket = PacketFactory::WarrantyEvent(1, airplaneID, technicianID, warrantyID, desc, decoded_imageBytes);
 			std::vector<uint8_t> txData = warrantyPacket.Serialize();
 			send(sock, (char*)txData.data(), txData.size(), 0);
 			logger.Log("Sent warranty event packet to tcp server");
