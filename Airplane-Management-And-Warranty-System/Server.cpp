@@ -203,8 +203,10 @@ int main() {
 
 							//Handle writing to DB
 							const char* command = "INSERT INTO WarrantyEvent (WarrantyID_FK, TechnicianID_FK, AirplaneID_FK, Description, Image) VALUES ($1, $2, $3, $4, $5)";
-							const char* parameters[5] = { technicianID.c_str(), airplaneID.c_str(), warrantyID.c_str(), description.c_str(), imageBytes.c_str() };
-							PGresult* result = PQexecParams(conn, command, 5, NULL, parameters, NULL, NULL, 0);
+							const char* parameters[5] = { warrantyID.c_str(), technicianID.c_str(), airplaneID.c_str(), description.c_str(), imageBytes.data() };
+							int paramLengths[5] = { 0 ,0 ,0 ,0 ,static_cast<int>(imageBytes.size()) };
+							int paramFormats[5] = { 0, 0, 0, 0, 1 }; // 1=binary 0=text
+							PGresult* result = PQexecParams(conn, command, 5, NULL, parameters, paramLengths, paramFormats, 0);
 							if (PQresultStatus(result) != PGRES_COMMAND_OK) {
 								logger.Log("DB Error: " + std::string(PQerrorMessage(conn)));
 								outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::INTERNAL, "Could not write to DB.");
