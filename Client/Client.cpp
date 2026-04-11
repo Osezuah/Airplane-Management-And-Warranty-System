@@ -192,14 +192,14 @@ int main() {
 		try {
 			int airplaneID = Body["airplaneID"].i();
 			std::string technicianID = Body["technicianID"].s();
-			std::string encoded_imageBytes = Body["imageBytes"].s();
+			std::string encoded_image = Body["imageBytes"].s();
 			std::string desc = Body["description"].s();
 			int warrantyID = 0;
 
 			//decode base64 bytes 
-			std::string decoded_imageBytes = crow::utility::base64decode(encoded_imageBytes);
+			std::string imageBytes = crow::utility::base64decode(encoded_image);
 
-			if (decoded_imageBytes.empty()) {
+			if (imageBytes.empty()) {
 				return crow::response(400, "Base64 decoding failed");
 			}
 
@@ -218,7 +218,7 @@ int main() {
 			}
 
 			//send
-			Packet warrantyPacket = PacketFactory::WarrantyEvent(1, airplaneID, technicianID, warrantyID, desc, decoded_imageBytes);
+			Packet warrantyPacket = PacketFactory::WarrantyEvent(1, airplaneID, technicianID, warrantyID, desc, imageBytes);
 			std::vector<uint8_t> txData = warrantyPacket.Serialize();
 			send(sock, (char*)txData.data(), txData.size(), 0);
 			logger.Log("Sent warranty event packet to tcp server");
