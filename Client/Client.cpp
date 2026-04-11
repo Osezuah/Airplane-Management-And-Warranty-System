@@ -196,13 +196,6 @@ int main() {
 			std::string desc = Body["description"].s();
 			int warrantyID = 0;
 
-			//decode base64 bytes 
-			std::string imageBytes = crow::utility::base64decode(encoded_image);
-
-			if (imageBytes.empty()) {
-				return crow::response(400, "Base64 decoding failed");
-			}
-
 			const char* command = "SELECT WarrantyID FROM Warranty WHERE AirplaneID_FK = $1";
 			std::string airplaneIDStr = std::to_string(airplaneID);
 			const char* parameters[1] = { airplaneIDStr.c_str() };
@@ -210,27 +203,39 @@ int main() {
 			if (PQntuples(result) > 0) {
 				char* val = PQgetvalue(result, 0, 0);
 				int warrantyID = std::stoi(val);
+				std::cout << warrantyID << std::endl;
+
+				//send
+				Packet warrantyPacket = PacketFactory::WarrantyEvent(10, airplaneID, technicianID, warrantyID, desc, encoded_image);
+				std::vector<uint8_t> txData = warrantyPacket.Serialize();
+				size_t totalToSend = txData.size();
+				size_t totalSent = 0;
+				const char* bufPtr = (const char*)txData.data();
+
+				while (totalSent < totalToSend) {
+					int sent = send(sock, bufPtr + totalSent, totalToSend - totalSent, 0);
+					if (sent == SOCKET_ERROR) {
+						logger.Log("Warranty event send failed with error: " + std::to_string(WSAGetLastError()));
+						break;
+					}
+					totalSent += sent;
+				}
+				logger.Log("Warranty event packet: Successfully sent " + std::to_string(totalSent) + " bytes to TCP server");
+
+				//recv
+				std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+				int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+				logger.Log("Received warranty event packet acknowledgement from tcp server");
+
+				closesocket(sock);
+				logger.Log("Disconnected from the TCP server; closed socket");
+				return crow::response(200, "Warranty Event sent successfully");
 			}
 			else {
 				closesocket(sock);
 				logger.Log("Disconnected from the TCP server; closed socket");
 				return crow::response(500, "WarrantyID not found in DB");
 			}
-
-			//send
-			Packet warrantyPacket = PacketFactory::WarrantyEvent(1, airplaneID, technicianID, warrantyID, desc, imageBytes);
-			std::vector<uint8_t> txData = warrantyPacket.Serialize();
-			send(sock, (char*)txData.data(), txData.size(), 0);
-			logger.Log("Sent warranty event packet to tcp server");
-
-			//recv
-			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
-			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
-			logger.Log("Received warranty event packet acknowledgement from tcp server");
-
-			closesocket(sock);
-			logger.Log("Disconnected from the TCP server; closed socket");
-			return crow::response(200, "Warranty Event sent successfully");
 		}
 		catch (const std::exception& e) {
 			closesocket(sock);

@@ -12,6 +12,7 @@
 #include "PacketFactory.h"
 #include "StateMachine.h"
 #include "Logger.h"
+#include "crow.h" 
 
 #define PAGE_SIZE 4096
 
@@ -106,20 +107,59 @@ int main() {
 		// Client work loop
 		bool connected = true;
 		while (connected) {
-			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
-			int bytesReceived = recv(clientSocket, (char*)rxBuffer.data(), rxBuffer.size(), 0);
+			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
+			//int bytesReceived = recv(clientSocket, (char*)rxBuffer.data(), rxBuffer.size(), 0);
 
 			// When client ends connection
-			if (bytesReceived <= 0) {
+			/*if (bytesReceived <= 0) {
 				logger.Log("Client disconnected naturally.");
 				stateMachine.TransitionStateTo(ServerState::IDLE);
 				connected = false;
 				break;
+			}*/
+			uint8_t headerBuffer[PACKETHEADER_BYTE_SIZE];
+			int totalHeaderRead = 0;
+
+			while (totalHeaderRead < PACKETHEADER_BYTE_SIZE) {
+				int r = recv(clientSocket, (char*)headerBuffer + totalHeaderRead, PACKETHEADER_BYTE_SIZE - totalHeaderRead, 0);
+				if (r <= 0) 
+				{
+					logger.Log("Client disconnected naturally.");
+					stateMachine.TransitionStateTo(ServerState::IDLE);
+					connected = false;
+					break;
+				};
+				totalHeaderRead += r;
+			}
+
+			// Parse the header to see how much more data(payload) is coming
+			PacketHeader* headerPtr = reinterpret_cast<PacketHeader*>(headerBuffer);
+			uint32_t bodySize = headerPtr->payloadLength;
+			uint32_t totalExpectedSize = PACKETHEADER_BYTE_SIZE + bodySize;
+
+			// Create a buffer for the WHOLE packet
+			std::vector<uint8_t> fullPacketBuffer(totalExpectedSize);
+
+			// Copy the header we already have into the start of the full buffer
+			std::memcpy(fullPacketBuffer.data(), headerBuffer, PACKETHEADER_BYTE_SIZE);
+
+			// Loop to receive the remaining body bytes
+			int currentBytesRead = PACKETHEADER_BYTE_SIZE;
+			while (currentBytesRead < totalExpectedSize) {
+				int r = recv(clientSocket, (char*)fullPacketBuffer.data() + currentBytesRead, totalExpectedSize - currentBytesRead, 0);
+				if (r <= 0) 
+				{
+					logger.Log("Client disconnected naturally.");
+					stateMachine.TransitionStateTo(ServerState::IDLE);
+					connected = false;
+					break;
+				};
+				currentBytesRead += r;
 			}
 
 			// Handle actual packet work
 			try {
-				Packet inputPacket = Packet::Deserialize(rxBuffer.data(), bytesReceived, false);
+				Packet inputPacket = Packet::Deserialize(fullPacketBuffer.data(), currentBytesRead, false);
 				crow::json::rvalue data = crow::json::load(inputPacket.payloadString());
 				Packet outputPacket;
 				if (!data) {
@@ -193,13 +233,22 @@ int main() {
 						}
 						else if (inputPacket.getType() == PacketType::WARRANTY_EVENT) {
 							logger.Log("Processing Warranty Event.");
+							std::cout << "processing warranty event" <<std::endl;
 
 							//extract values
 							std::string technicianID = std::to_string(data["technicianID"].i());
 							std::string airplaneID = std::to_string(data["airplaneID"].i());
 							std::string warrantyID = std::to_string(data["warrantyID"].i());
 							std::string description = data["description"].s();
-							std::string imageBytes = data["imageBytes"].s();
+							std::string encoded_image = data["imageBytes"].s();
+
+							//decode base64 bytes 
+							std::string imageBytes = crow::utility::base64decode(encoded_image);
+
+							if (imageBytes.empty()) {
+								logger.Log("Base64 decoding failed");
+								outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::INTERNAL, "Could not decode base64 image");
+							}
 
 							//Handle writing to DB
 							const char* command = "INSERT INTO WarrantyEvent (WarrantyID_FK, TechnicianID_FK, AirplaneID_FK, Description, Image) VALUES ($1, $2, $3, $4, $5)";
