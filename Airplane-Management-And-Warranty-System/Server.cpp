@@ -245,6 +245,12 @@ int main() {
 							//decode base64 bytes 
 							std::string imageBytes = crow::utility::base64decode(encoded_image);
 
+							// Just a test will delete later: Write the bytes to a file to confirm its not corrupted
+							std::ofstream testFile("received_test.jpg", std::ios::binary);
+							testFile.write(imageBytes.data(), imageBytes.size());
+							testFile.close();
+
+
 							if (imageBytes.empty()) {
 								logger.Log("Base64 decoding failed");
 								outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::INTERNAL, "Could not decode base64 image");
