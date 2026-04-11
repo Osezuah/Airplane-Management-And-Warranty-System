@@ -191,3 +191,7 @@
 [2026-04-11-00:15:32.563] Processing Maintenance Event.
 [2026-04-11-00:15:32.570] Wrote to DB. Data: 1/12/Oil Change/changed oil
 [2026-04-11-00:15:32.572] Client disconnected naturally.
+[2026-04-11-18:27:16.025] Server setup finished. Server ON. State: IDLE
+[2026-04-11-18:27:25.034] Client connected and waiting for verification. State: WAITING_FOR_VERIFICATION
+[2026-04-11-18:27:25.041] Handshake authenticated. State: CONNECTED
+[2026-04-11-18:27:25.043] Client disconnected naturally.

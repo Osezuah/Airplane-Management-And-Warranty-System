@@ -190,36 +190,36 @@
                         description: document.getElementById('description').value,
                         imageBytes: base64Data
                     };
-                }
-                               
-                try {
-                    const response = await fetch('http://localhost:8080/warranty_event', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(eventData)
-                    });
+                    try {
+                        const response = await fetch('http://localhost:8080/warranty_event', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(eventData)
+                        });
 
-                    const result = await response.text();
+                        const result = await response.text();
 
-                    const modal = document.getElementById('statusModal');
-                    const msg = document.getElementById('modalMessage');
-                    const btn = document.getElementById('closeBtn');
+                        const modal = document.getElementById('statusModal');
+                        const msg = document.getElementById('modalMessage');
+                        const btn = document.getElementById('closeBtn');
 
-                    msg.textContent = result;
-                    modal.showModal();
-                    btn.onclick = () => {
-                        modal.close();
-                        container.innerHTML = "";
-                        const page1 = ` <h2>Airplane Fleet Overview</h2>
-                            <p id="airplaneList">Connecting to system...</p>
-                            <div id="airplaneContainer" class="airplane-grid"></div>`;
-                        container.innerHTML = page1 // Reset main container content
-                        loadAirplanes(); // Refresh the airplane list after submitting the maintenance event
-                    };
+                        msg.textContent = result;
+                        modal.showModal();
+                        btn.onclick = () => {
+                            modal.close();
+                            container.innerHTML = "";
+                            const page1 = ` <h2>Airplane Fleet Overview</h2>
+                                             <p id="airplaneList">Connecting to system...</p>
+                                             <div id="airplaneContainer" class="airplane-grid"></div>`;
+                            container.innerHTML = page1 // Reset main container content
+                            loadAirplanes(); // Refresh the airplane list after submitting the maintenance event
+                        };
 
-                } catch (err) {
-                    console.error("Fetch error:", err);
-                }
+                    } catch (err) {
+                        console.error("Fetch error:", err);
+                    }
+                }                        
+               
             });
 
         }

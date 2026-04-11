@@ -6,3 +6,6 @@
 [2026-04-11-00:15:32.571] Received maintenance event packet acknowledgement from tcp server
 [2026-04-11-00:15:32.572] Disconnected from the TCP server; closed socket
 [2026-04-11-00:15:33.858] Retrieved all airplanes from database.
+[2026-04-11-18:27:25.042] Connected to TCP server and completed handshake.
+[2026-04-11-18:27:25.043] Disconnected from the TCP server; closed socket
+[2026-04-11-18:27:25.050] Retrieved all airplanes from database.
