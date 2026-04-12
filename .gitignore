@@ -375,3 +375,8 @@ vcpkg/
 
 # Docker data 
 pgdata/
+
+# Log files
+Airplane-Management-And-Warranty-System/serverLog.txt
+Airplane-Management-And-Warranty-System/received_test.jpg
+Client/client_log.txt
