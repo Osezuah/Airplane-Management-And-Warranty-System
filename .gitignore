@@ -12,6 +12,9 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+/Airplane-Management-And-Warranty-System/serverLog.txt
+/Airplane-Management-And-Warranty-System/received_test.jpg
+/Client/client_log.txt
 
 # Mono auto generated files
 mono_crash.*
@@ -375,8 +378,3 @@ vcpkg/
 
 # Docker data 
 pgdata/
-
-# Log files
-Airplane-Management-And-Warranty-System/serverLog.txt
-Airplane-Management-And-Warranty-System/received_test.jpg
-Client/client_log.txt
