@@ -227,11 +227,7 @@
                         btn.onclick = () => {
                             modal.close();
                             container.innerHTML = "";
-                            const page1 = ` <h2>Airplane Fleet Overview</h2>
-                                             <p id="airplaneList">Connecting to system...</p>
-                                             <div id="airplaneContainer" class="airplane-grid"></div>`;
-                            container.innerHTML = page1 // Reset main container content
-                            loadAirplanes(); // Refresh the airplane list after submitting the maintenance event
+                            MainPage(); // Reset main container content and reload airplane list after submitting the warranty event
                         };
 
                     } catch (err) {

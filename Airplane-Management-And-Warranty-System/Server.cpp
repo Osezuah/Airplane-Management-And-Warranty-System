@@ -16,24 +16,21 @@
 
 #define PAGE_SIZE 4096
 
-void send_all_airplanes_to_client(SOCKET clientSocket, PGconn* conn, Packet request) {
-	// Database logic
-	PGresult* res = PQexec(conn, "SELECT row_to_json(t) FROM (SELECT * FROM Airplane) t;");
-	int rows = PQntuples(res);
-
-	std::string records = "[";
-	for (int i = 0; i < rows; i++) {
-		records += PQgetvalue(res, i, 0);
-		if (i < rows - 1) records += ",";
+std::string base64_encode(const unsigned char* data, size_t len) {
+	static const char* lookup = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	std::string out;
+	int val = 0, valb = -6;
+	for (size_t i = 0; i < len; ++i) {
+		val = (val << 8) + data[i];
+		valb += 8;
+		while (valb >= 0) {
+			out.push_back(lookup[(val >> valb) & 0x3F]);
+			valb -= 6;
+		}
 	}
-	records += "]";
-	PQclear(res);
-	std::cout << records << std::endl;
-
-	// Send the response back
-	Packet response = PacketFactory::QueryResponse(request.getSequence(), rows, records);
-	std::vector<uint8_t> out = response.Serialize();
-	send(clientSocket, (const char*)out.data(), (int)out.size(), 0);
+	if (valb > -6) out.push_back(lookup[((val << 8) >> (valb + 8)) & 0x3F]);
+	while (out.size() % 4) out.push_back('=');
+	return out;
 }
 
 int main() {
@@ -313,10 +310,14 @@ int main() {
 
 								//handle BYTEA image
 								char* escapedImage = PQgetvalue(result, 0, 2);
+								int actualStoredLength = PQgetlength(result, 0, 2);
+								std::cout << "Actual stored length in DB: " << actualStoredLength << std::endl;
 								size_t binaryLen = 0;
 								unsigned char* rawBinary = PQunescapeBytea((unsigned char*)escapedImage, &binaryLen);
 								//convert to base64 to send back to client
-								std::string base64Image = crow::utility::base64encode(rawBinary, binaryLen);
+								//std::string binaryStr = std::string((char*)rawBinary, binaryLen);
+								//std::string base64Image = crow::utility::base64encode(reinterpret_cast<const unsigned char*>(binaryStr.data()), binaryStr.size());
+								std::string base64Image = base64_encode(rawBinary, binaryLen);
 								PQfreemem(rawBinary);
 
 								// format json
@@ -325,7 +326,7 @@ int main() {
 								payload["description"] = description;
 								payload["image"] = base64Image;
 
-								std::string payloadStr = payload.dump();
+								std::string payloadStr = "{\"status\":\"" + status + "\",\"description\":\"" + description + "\",\"image\":\"" + base64Image + "\"}";
 								std::vector<uint8_t> binaryPayload(payloadStr.begin(), payloadStr.end());
 
 								// send response
