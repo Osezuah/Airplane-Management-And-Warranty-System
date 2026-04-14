@@ -28,6 +28,33 @@ void handshake_with_tcp_server(SOCKET sock) {
 	std::cout << "Handshake response received. Session Token: " << success << std::endl;
 }
 
+//establish connection to TCP server and perform handshake, returning socket if successful
+SOCKET establish_connection()
+{
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	sockaddr_in serverAddr{};
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(27000);
+	inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
+
+	connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
+	handshake_with_tcp_server(sock);
+
+	return sock;
+}
+
+// terminate connection by closing socket
+void terminate_connection(SOCKET s)
+{
+	closesocket(s);
+}
+
+//logging function to log messages to client_log.txt using Logger class
+void logging(const std::string& message) {
+	Logger logger("client_log.txt");
+	logger.Log(message);
+}
+
 int main() {
 	//copy http://localhost:8080 to search bar
 
@@ -55,42 +82,15 @@ int main() {
 
 	//route to connect to server via TCP sockets
 	CROW_ROUTE(app, "/connect-to-tcp-server")([]() {	
-			Logger logger("client_log.txt");
-
-			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-			sockaddr_in serverAddr{};
-			serverAddr.sin_family = AF_INET;
-			serverAddr.sin_port = htons(27000);
-			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-
-			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-			handshake_with_tcp_server(sock);
-			logger.Log("Connected to TCP server and completed handshake.");
-			closesocket(sock);
-			logger.Log("Disconnected from the TCP server; closed socket");
-			return "";
+		SOCKET socket = establish_connection();
+		logging("Connected to TCP server and completed handshake.");
+		terminate_connection(socket);
+		logging("Disconnected from the TCP server; closed socket");
+		return "";
 	});
 
 	//route to access airplanes in database
 	CROW_ROUTE(app, "/airplanes")([conn]() {
-			/*SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-			sockaddr_in serverAddr{};
-			serverAddr.sin_family = AF_INET;
-			serverAddr.sin_port = htons(27000);
-			inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-
-			connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-			handshake_with_tcp_server(sock);*/
-
-			//recv
-			//std::vector<uint8_t> rxBuffer(PAGE_SIZE);
-			//outputPacket = PacketFactory::HandshakeAck(inputPacket.getSequence(), true, "SESSION_VALID");
-			//send(clientSocket, (char*)txData.data(), txData.size(), 0);
-
-			//send
-			/*Packet handshakePacket = PacketFactory::Handshake(1, "1", "Client");
-			std::vector<uint8_t> txData = handshakePacket.Serialize();
-			send(sock, (char*)txData.data(), txData.size(), 0);*/
 			Logger logger("client_log.txt");
 			const char* command = "SELECT * FROM Airplane";
 			PGresult* result = PQexec(conn, command);
@@ -116,28 +116,19 @@ int main() {
 				airplaneList.push_back(std::move(airplane));
 			}
 
-			// 3. Clean up and return
+			// Clean up and return
 			PQclear(result);
 			crow::json::wvalue finalResponse;
 			finalResponse["data"] = std::move(airplaneList);
 
 			logger.Log("Retrieved all airplanes from database.");
 
-			//closesocket(sock);
 			return crow::response(finalResponse);
 	});
 
 	CROW_ROUTE(app, "/maintenance_event").methods("POST"_method)([](const crow::request& req) {
-		Logger logger("client_log.txt");
-		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-		sockaddr_in serverAddr{};
-		serverAddr.sin_family = AF_INET;
-		serverAddr.sin_port = htons(27000);
-		inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-
-		connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-		handshake_with_tcp_server(sock);
-		logger.Log("Connected to TCP server and completed handshake.");
+		SOCKET sock = establish_connection();
+		logging("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
 		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
@@ -154,35 +145,27 @@ int main() {
 			Packet maintenancePacket = PacketFactory::MaintenanceEvent(1, airplaneID, technicianID, type, desc);
 			std::vector<uint8_t> txData = maintenancePacket.Serialize();
 			send(sock, (char*)txData.data(), txData.size(), 0);
-			logger.Log("Sent maintenance event packet to tcp server");
+			logging("Sent maintenance event packet to tcp server");
 
 			//recv
 			std::vector<uint8_t> rxBuffer(PAGE_SIZE);
 			int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
-			logger.Log("Received maintenance event packet acknowledgement from tcp server");
+			logging("Received maintenance event packet acknowledgement from tcp server");
 
-			closesocket(sock);
-			logger.Log("Disconnected from the TCP server; closed socket");
+			terminate_connection(sock);
+			logging("Disconnected from the TCP server; closed socket");
 			return crow::response(200, "Maintenance Event sent successfully");
 		}
 		catch (const std::exception& e) {
-			closesocket(sock);
-			logger.Log("Disconnected from the TCP server; closed socket");
+			terminate_connection(sock);
+			logging("Disconnected from the TCP server; closed socket");
 			return crow::response(400, "Error processing request: " + std::string(e.what()));
 		}
 	});
 
 	CROW_ROUTE(app, "/warranty_event").methods("POST"_method)([conn](const crow::request& req) {
-		Logger logger("client_log.txt");
-		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-		sockaddr_in serverAddr{};
-		serverAddr.sin_family = AF_INET;
-		serverAddr.sin_port = htons(27000);
-		inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-
-		connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
-		handshake_with_tcp_server(sock);
-		logger.Log("Connected to TCP server and completed handshake.");
+		SOCKET sock = establish_connection();
+		logging("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
 		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
@@ -215,34 +198,102 @@ int main() {
 				while (totalSent < totalToSend) {
 					int sent = send(sock, bufPtr + totalSent, totalToSend - totalSent, 0);
 					if (sent == SOCKET_ERROR) {
-						logger.Log("Warranty event send failed with error: " + std::to_string(WSAGetLastError()));
+						logging("Warranty event send failed with error: " + std::to_string(WSAGetLastError()));
 						break;
 					}
 					totalSent += sent;
 				}
-				logger.Log("Warranty event packet: Successfully sent " + std::to_string(totalSent) + " bytes to TCP server");
+				logging("Warranty event packet: Successfully sent " + std::to_string(totalSent) + " bytes to TCP server");
 
 				//recv
 				std::vector<uint8_t> rxBuffer(PAGE_SIZE);
 				int bytesReceived = recv(sock, (char*)rxBuffer.data(), rxBuffer.size(), 0);
-				logger.Log("Received warranty event packet acknowledgement from tcp server");
+				logging("Received warranty event packet acknowledgement from tcp server");
 
-				closesocket(sock);
-				logger.Log("Disconnected from the TCP server; closed socket");
+				terminate_connection(sock);
+				logging("Disconnected from the TCP server; closed socket");
 				return crow::response(200, "Warranty Event sent successfully");
 			}
 			else {
-				closesocket(sock);
-				logger.Log("Disconnected from the TCP server; closed socket");
+				terminate_connection(sock);
+				logging("Disconnected from the TCP server; closed socket");
 				return crow::response(500, "WarrantyID not found in DB");
 			}
 		}
 		catch (const std::exception& e) {
-			closesocket(sock);
-			logger.Log("Disconnected from the TCP server; closed socket");
+			terminate_connection(sock);
+			logging("Disconnected from the TCP server; closed socket");
 			return crow::response(400, "Error processing request: " + std::string(e.what()));
 		}
+	});
 
+	CROW_ROUTE(app, "/warranty_history/<int>")([&](int id) {
+		try {
+			int airplaneID = id;
+			SOCKET sock = establish_connection();
+			logging("Connected to TCP server and completed handshake.");
+
+			// send report request
+			Packet reportRequestPacket = PacketFactory::ReportRequest(1, airplaneID);
+			std::vector<uint8_t> txData = reportRequestPacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);
+			logging("Sent warranty history report request packet to TCP server for AirplaneID: " + std::to_string(airplaneID));
+
+			//recv report data
+			uint8_t headerBuffer[PACKETHEADER_BYTE_SIZE];
+			int totalHeaderRead = 0;
+
+			while (totalHeaderRead < PACKETHEADER_BYTE_SIZE) {
+				int r = recv(sock, (char*)headerBuffer + totalHeaderRead, PACKETHEADER_BYTE_SIZE - totalHeaderRead, 0);
+				if (r <= 0)
+				{
+					logging("Server disconnected");
+					break;
+				};
+				totalHeaderRead += r;
+			}
+
+			if (totalHeaderRead < PACKETHEADER_BYTE_SIZE) {
+				logging("Error: Failed to receive full packet header");
+				terminate_connection(sock);
+				return crow::response(500, "Incomplete header received");
+			}
+
+			// Parse the header to see how much more data(payload) is coming
+			PacketHeader* headerPtr = reinterpret_cast<PacketHeader*>(headerBuffer);
+			uint32_t bodySize = headerPtr->payloadLength;
+			uint32_t totalExpectedSize = PACKETHEADER_BYTE_SIZE + bodySize;
+
+			// Create a buffer for the WHOLE packet
+			std::vector<uint8_t> fullPacketBuffer(totalExpectedSize);
+
+			// Copy the header we already have into the start of the full buffer
+			std::memcpy(fullPacketBuffer.data(), headerBuffer, PACKETHEADER_BYTE_SIZE);
+
+			// Loop to receive the remaining body bytes
+			int currentBytesRead = PACKETHEADER_BYTE_SIZE;
+			while (currentBytesRead < totalExpectedSize) {
+				int r = recv(sock, (char*)fullPacketBuffer.data() + currentBytesRead, totalExpectedSize - currentBytesRead, 0);
+				if (r <= 0)
+				{
+					logging("Server disconnected");
+					break;
+				};
+				currentBytesRead += r;
+			}
+
+			Packet inputPacket = Packet::Deserialize(fullPacketBuffer.data(), currentBytesRead, false);
+			crow::response res;
+			res.code = 200;
+			res.set_header("Content-Type", "application/json");
+			res.body = inputPacket.payloadString();
+			logging("Received warranty history report data from TCP server and sent response to browser");
+			terminate_connection(sock);
+			return res;
+		}
+		catch (const std::exception& e) {
+			return crow::response(400, "Error processing request: " + std::string(e.what()));
+		}
 	});
 
 	// Start the server on port 8080

@@ -72,7 +72,7 @@
                                 <div class="card-actions">
                                     <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}', '${plane.name}')">Maintenance Event</button>
                                     <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
-                                    <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}')">Warranty History</button>
+                                    <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}', '${plane.name}')">Warranty History</button>
                                     <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}', '${plane.name}')">Warranty Event</button>
                                 </div>
                             </div>
@@ -153,8 +153,22 @@
         }
 
         //warranty history event handler function to be called when the warranty history button is clicked for an airplane card
-        function handleWarrantyHistory(id) {
+        function handleWarrantyHistory(id, name) {
             console.log("Warranty History for:", id);
+            const container = document.getElementById("main");
+            const response = await fetch(`http://localhost:8080/warranty_history/${id}`);
+            const data = await response.json();
+
+            const historyContent = `
+                            <h2>Request Warranty History for Airplane ${name}</h2>
+                            <div class="card">
+                                <p><span class="label">Warranty Status:</span> ${data.status}</p>
+                                <p><span class="label">Damage Description:</span> ${data.description}</p>
+                                <img src="data:image/jpeg;base64,${data.image}" alt="Warranty History Image" style="max-width: 100%; height: auto; margin-top: 10px;">
+                                <button onclick="loadAirplanes()">Back to Airplane List</button>
+                            </div>
+                        `;
+            container.innerHTML = historyContent;
         }
 
         //warranty event handler function to be called when the warranty event button is clicked for an airplane card

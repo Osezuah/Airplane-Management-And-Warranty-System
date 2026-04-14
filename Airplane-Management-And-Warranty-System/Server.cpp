@@ -308,7 +308,39 @@ int main() {
 							PGresult* result = PQexecParams(conn, command, 1, NULL, parameters, NULL, NULL, 1);
 
 							if (PQntuples(result) > 0) {
-								// TO-DO: RETRIEVE DATA FROM DB AND SEND TO CLIENT
+								std::string status = PQgetvalue(result, 0, 0);
+								std::string description = PQgetvalue(result, 0, 1);
+
+								//handle BYTEA image
+								char* escapedImage = PQgetvalue(result, 0, 2);
+								size_t binaryLen = 0;
+								unsigned char* rawBinary = PQunescapeBytea((unsigned char*)escapedImage, &binaryLen);
+								//convert to base64 to send back to client
+								std::string base64Image = crow::utility::base64encode(rawBinary, binaryLen);
+								PQfreemem(rawBinary);
+
+								// format json
+								crow::json::wvalue payload;
+								payload["status"] = status;
+								payload["description"] = description;
+								payload["image"] = base64Image;
+
+								// send response
+								Packet responsePacket(PacketType::REPORT_DATA, 1, { payload.dump().begin(), payload.dump().end() });
+								std::vector<uint8_t> out = responsePacket.Serialize();
+								size_t totalToSend = out.size();
+								size_t totalSent = 0;
+								const char* bufPtr = (const char*)out.data();
+
+								while (totalSent < totalToSend) {
+									int sent = send(clientSocket, bufPtr + totalSent, totalToSend - totalSent, 0);
+									if (sent == SOCKET_ERROR) {
+										logger.Log("Warranty history report send failed with error: " + std::to_string(WSAGetLastError()));
+										break;
+									}
+									totalSent += sent;
+								}
+								logger.Log("Warranty history report packet: Successfully sent " + std::to_string(totalSent) + " bytes to Client");
 							}
 							else {
 							
