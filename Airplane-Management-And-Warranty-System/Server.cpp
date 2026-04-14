@@ -325,8 +325,11 @@ int main() {
 								payload["description"] = description;
 								payload["image"] = base64Image;
 
+								std::string payloadStr = payload.dump();
+								std::vector<uint8_t> binaryPayload(payloadStr.begin(), payloadStr.end());
+
 								// send response
-								Packet responsePacket(PacketType::REPORT_DATA, 1, { payload.dump().begin(), payload.dump().end() });
+								Packet responsePacket(PacketType::REPORT_DATA, 1, std::move(binaryPayload));
 								std::vector<uint8_t> out = responsePacket.Serialize();
 								size_t totalToSend = out.size();
 								size_t totalSent = 0;

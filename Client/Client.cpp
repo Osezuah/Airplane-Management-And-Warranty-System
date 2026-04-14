@@ -29,19 +29,24 @@ void handshake_with_tcp_server(SOCKET sock) {
 }
 
 //establish connection to TCP server and perform handshake, returning socket if successful
-SOCKET establish_connection()
-{
+SOCKET establish_connection() {
 	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET) return INVALID_SOCKET;
+
 	sockaddr_in serverAddr{};
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(27000);
 	inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
 
-	connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
+	if (connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+		closesocket(sock);
+		return INVALID_SOCKET;
+	}
 	handshake_with_tcp_server(sock);
 
 	return sock;
 }
+
 
 // terminate connection by closing socket
 void terminate_connection(SOCKET s)
@@ -83,15 +88,19 @@ int main() {
 	//route to connect to server via TCP sockets
 	CROW_ROUTE(app, "/connect-to-tcp-server")([]() {	
 		SOCKET socket = establish_connection();
+		if (socket == INVALID_SOCKET) {
+			logging("Failed to connect to TCP server.");
+			terminate_connection(socket);
+			return crow::response(503, "Service Unavailable: TCP Server Down");
+		}
 		logging("Connected to TCP server and completed handshake.");
 		terminate_connection(socket);
 		logging("Disconnected from the TCP server; closed socket");
-		return "";
+		return crow::response(200, "Connected to TCP Server");
 	});
 
 	//route to access airplanes in database
 	CROW_ROUTE(app, "/airplanes")([conn]() {
-			Logger logger("client_log.txt");
 			const char* command = "SELECT * FROM Airplane";
 			PGresult* result = PQexec(conn, command);
 
@@ -121,17 +130,23 @@ int main() {
 			crow::json::wvalue finalResponse;
 			finalResponse["data"] = std::move(airplaneList);
 
-			logger.Log("Retrieved all airplanes from database.");
+			logging("Retrieved all airplanes from database.");
 
 			return crow::response(finalResponse);
 	});
 
 	CROW_ROUTE(app, "/maintenance_event").methods("POST"_method)([](const crow::request& req) {
 		SOCKET sock = establish_connection();
+		if (sock == INVALID_SOCKET) {
+			logging("Failed to connect to TCP server.");
+			terminate_connection(sock);
+			return crow::response(503, "Service Unavailable: TCP Server Down");
+		}
 		logging("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
 		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
+			terminate_connection(sock);
 			return crow::response(400, "Invalid JSON data received");
 		}
 
@@ -165,10 +180,16 @@ int main() {
 
 	CROW_ROUTE(app, "/warranty_event").methods("POST"_method)([conn](const crow::request& req) {
 		SOCKET sock = establish_connection();
+		if (sock == INVALID_SOCKET) {
+			logging("Failed to connect to TCP server.");
+			terminate_connection(sock);
+			return crow::response(503, "Service Unavailable: TCP Server Down");
+		}
 		logging("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
 		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
+			terminate_connection(sock);
 			return crow::response(400, "Invalid JSON data received");
 		}
 
@@ -228,9 +249,14 @@ int main() {
 	});
 
 	CROW_ROUTE(app, "/warranty_history/<int>")([&](int id) {
+		SOCKET sock = establish_connection();
+		if (sock == INVALID_SOCKET) {
+			logging("Failed to connect to TCP server.");
+			terminate_connection(sock);
+			return crow::response(503, "Service Unavailable: TCP Server Down");
+		}
 		try {
 			int airplaneID = id;
-			SOCKET sock = establish_connection();
 			logging("Connected to TCP server and completed handshake.");
 
 			// send report request
@@ -240,7 +266,7 @@ int main() {
 			logging("Sent warranty history report request packet to TCP server for AirplaneID: " + std::to_string(airplaneID));
 
 			//recv report data
-			uint8_t headerBuffer[PACKETHEADER_BYTE_SIZE];
+			uint8_t headerBuffer[PACKETHEADER_BYTE_SIZE] = { 0 };
 			int totalHeaderRead = 0;
 
 			while (totalHeaderRead < PACKETHEADER_BYTE_SIZE) {
@@ -248,12 +274,13 @@ int main() {
 				if (r <= 0)
 				{
 					logging("Server disconnected");
+					terminate_connection(sock);
 					break;
 				};
 				totalHeaderRead += r;
 			}
 
-			if (totalHeaderRead < PACKETHEADER_BYTE_SIZE) {
+			if (totalHeaderRead != PACKETHEADER_BYTE_SIZE) {
 				logging("Error: Failed to receive full packet header");
 				terminate_connection(sock);
 				return crow::response(500, "Incomplete header received");
@@ -268,7 +295,7 @@ int main() {
 			std::vector<uint8_t> fullPacketBuffer(totalExpectedSize);
 
 			// Copy the header we already have into the start of the full buffer
-			std::memcpy(fullPacketBuffer.data(), headerBuffer, PACKETHEADER_BYTE_SIZE);
+			std::memcpy(fullPacketBuffer.data(), headerBuffer, totalHeaderRead);
 
 			// Loop to receive the remaining body bytes
 			int currentBytesRead = PACKETHEADER_BYTE_SIZE;
@@ -277,6 +304,7 @@ int main() {
 				if (r <= 0)
 				{
 					logging("Server disconnected");
+					terminate_connection(sock);
 					break;
 				};
 				currentBytesRead += r;
@@ -292,6 +320,7 @@ int main() {
 			return res;
 		}
 		catch (const std::exception& e) {
+			terminate_connection(sock);
 			return crow::response(400, "Error processing request: " + std::string(e.what()));
 		}
 	});
