@@ -71,7 +71,7 @@
 
                                 <div class="card-actions">
                                     <button class="action-link" onclick="handleMaintenanceEvent('${plane.airplaneid}', '${plane.name}')">Maintenance Event</button>
-                                    <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}')">Maintenance History</button>
+                                    <button class="action-link" onclick="handleMaintenanceHistory('${plane.airplaneid}', '${plane.name}')">Maintenance History</button>
                                     <button class="action-link" onclick="handleWarrantyHistory('${plane.airplaneid}', '${plane.name}')">Warranty History</button>
                                     <button class="action-link" onclick="handleWarrantyEvent('${plane.airplaneid}', '${plane.name}')">Warranty Event</button>
                                 </div>
@@ -86,7 +86,8 @@
                 output2.style.color = "red";
             }
         }
-        //maintenance event handler function to be called when the maintenance event button is clicked for an airplane card
+
+        //maintenance event handler function 
         async function handleMaintenanceEvent(id, name) {
             console.log("Maintenance Event for:", id + " " + name);
             const container = document.getElementById("main");
@@ -152,12 +153,28 @@
             loadAirplanes();
         }
 
-        //maintenance history event handler function to be called when the maintenance history button is clicked for an airplane card
-        function handleMaintenanceHistory(id) {
+        //maintenance history event handler 
+        async function handleMaintenanceHistory(id, name) {
             console.log("Maintenance History for:", id);
+            const container = document.getElementById("main");
+            const response = await fetch(`http://localhost:8080/maintenance_history/${id}`);
+            const data = await response.json();
+            container.innerHTML = `<h2>Maintenance History for Airplane ${name}</h2>`;
+
+            data.forEach(mh => {
+                const historyContent = `
+                    <div class="card">
+                        <p><span class="label">Maintenance Type:</span> ${mh.type}</p>
+                        <p><span class="label">Damage Description:</span> ${mh.description}</p>
+                        <button onclick="MainPage()">Back to Airplane List</button>
+                    </div>
+                `;
+                container.innerHTML += historyContent;
+            });
+            
         }
 
-        //warranty history event handler function to be called when the warranty history button is clicked for an airplane card
+        //warranty history event handler
         async function handleWarrantyHistory(id, name) {
             console.log("Warranty History for:", id);
             const container = document.getElementById("main");
@@ -176,7 +193,7 @@
             container.innerHTML = historyContent;
         }
 
-        //warranty event handler function to be called when the warranty event button is clicked for an airplane card
+        //warranty event handler function 
         async function handleWarrantyEvent(id, name) {
             console.log("Warranty Event for:", id);
             const container = document.getElementById("main");

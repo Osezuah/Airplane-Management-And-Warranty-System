@@ -325,6 +325,84 @@ int main() {
 		}
 	});
 
+	CROW_ROUTE(app, "/maintenance_history/<int>")([&](int id) {
+		SOCKET sock = establish_connection();
+		if (sock == INVALID_SOCKET) {
+			logging("Failed to connect to TCP server.");
+			terminate_connection(sock);
+			return crow::response(503, "Service Unavailable: TCP Server Down");
+		}
+
+		try {
+			int airplaneID = id;
+			logging("Connected to TCP server and completed handshake.");
+
+			// send maintenance history request
+			Packet reportRequestPacket = PacketFactory::MaintenanceHistory(1, airplaneID);
+			std::vector<uint8_t> txData = reportRequestPacket.Serialize();
+			send(sock, (char*)txData.data(), txData.size(), 0);
+			logging("Sent maintenance history report request packet to TCP server for AirplaneID: " + std::to_string(airplaneID));
+
+			//recv report data
+			uint8_t headerBuffer[PACKETHEADER_BYTE_SIZE] = { 0 };
+			int totalHeaderRead = 0;
+
+			while (totalHeaderRead < PACKETHEADER_BYTE_SIZE) {
+				int r = recv(sock, (char*)headerBuffer + totalHeaderRead, PACKETHEADER_BYTE_SIZE - totalHeaderRead, 0);
+				if (r <= 0)
+				{
+					logging("Server disconnected");
+					terminate_connection(sock);
+					break;
+				};
+				totalHeaderRead += r;
+			}
+
+			if (totalHeaderRead != PACKETHEADER_BYTE_SIZE) {
+				logging("Error: Failed to receive full packet header");
+				terminate_connection(sock);
+				return crow::response(500, "Incomplete header received");
+			}
+
+			// Parse the header to see how much more data(payload) is coming
+			PacketHeader* headerPtr = reinterpret_cast<PacketHeader*>(headerBuffer);
+			uint32_t bodySize = headerPtr->payloadLength;
+			uint32_t totalExpectedSize = PACKETHEADER_BYTE_SIZE + bodySize;
+
+			// Create a buffer for the WHOLE packet
+			std::vector<uint8_t> fullPacketBuffer(totalExpectedSize);
+
+			// Copy the header we already have into the start of the full buffer
+			std::memcpy(fullPacketBuffer.data(), headerBuffer, totalHeaderRead);
+
+			// Loop to receive the remaining body bytes
+			int currentBytesRead = PACKETHEADER_BYTE_SIZE;
+			while (currentBytesRead < totalExpectedSize) {
+				int r = recv(sock, (char*)fullPacketBuffer.data() + currentBytesRead, totalExpectedSize - currentBytesRead, 0);
+				if (r <= 0)
+				{
+					logging("Server disconnected");
+					terminate_connection(sock);
+					break;
+				};
+				currentBytesRead += r;
+			}
+
+			Packet inputPacket = Packet::Deserialize(fullPacketBuffer.data(), currentBytesRead, false);
+			crow::response res;
+			res.code = 200;
+			res.set_header("Content-Type", "application/json");
+			res.body = inputPacket.payloadString();
+			logging("Received maintenance history report data from TCP server and sent response to browser");
+			terminate_connection(sock);
+			return res;
+		}
+		catch (const std::exception& e) {
+			terminate_connection(sock);
+			return crow::response(400, "Error processing request: " + std::string(e.what()));
+		}
+	});
+
 	// Start the server on port 8080
 	app.port(8080).multithreaded().run();
 

@@ -41,10 +41,6 @@ Packet Packet::Deserialize(const uint8_t* data, size_t size, bool headerOnly)
 	Packet packet;
 	std::memcpy(&packet.header, data, PACKETHEADER_BYTE_SIZE);
 
-	/*if (headerOnly) {
-		return packet;
-	}*/
-
 	// Check for payload length accuracy
 	const size_t expected = PACKETHEADER_BYTE_SIZE + packet.header.payloadLength;
 	if (size < expected)
@@ -84,8 +80,4 @@ std::string Packet::payloadString() const
 	const char* asChar = reinterpret_cast<const char*>(rawBytes);
 	std::string asString(asChar, payload.size());
 	return asString;
-	//std::string s(payload.begin(), payload.end());
-	//// Remove any trailing null terminators that might have snuck in from the network buffer
-	//s.erase(std::find(s.begin(), s.end(), '\0'), s.end());
-	//return s;
 }

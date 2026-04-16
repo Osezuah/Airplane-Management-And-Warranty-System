@@ -17,7 +17,7 @@ enum class PacketType : uint8_t {
     MAINTENANCE_HISTORY = 0x25,     // Client -> Server / Client request airlplane record
     QUERY_RESPONSE = 0x21,    // Server -> Client / Server responds with record
     REPORT_REQUEST = 0x30,    // Client -> Server / Client requests warranty record
-    REPORT_DATA = 0x31,       // Server -> Client / Server responds with warranty
+    REPORT_DATA = 0x31,       // Server -> Client / Server responds with warranty or maintenance
     ACK = 0x0F,               // Both ways
     ERROR_PACKET = 0xFF              // Both ways
 };

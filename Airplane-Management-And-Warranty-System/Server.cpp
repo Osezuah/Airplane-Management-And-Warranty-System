@@ -242,11 +242,6 @@ int main() {
 							//decode base64 bytes 
 							std::string imageBytes = crow::utility::base64decode(encoded_image);
 
-							// Just a test will delete later: Write the bytes to a file to confirm its not corrupted
-							std::ofstream testFile("received_test.jpg", std::ios::binary);
-							testFile.write(imageBytes.data(), imageBytes.size());
-							testFile.close();
-
 							if (imageBytes.empty()) {
 								logger.Log("Base64 decoding failed");
 								outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::INTERNAL, "Could not decode base64 image");
@@ -275,12 +270,49 @@ int main() {
 							std::string airplaneID = std::to_string(data["airplaneID"].i());
 
 							// Query DB for specific airplane from ID
-							const char* command = "SELECT * FROM Airplane WHERE AirplaneID = $1";
+							const char* command = "SELECT M.Type, M.Description FROM MaintenanceEvent M "
+												  "WHERE M.AirplaneID_FK = $1";
 							const char* parameters[1] = { airplaneID.c_str() };
 							PGresult* result = PQexecParams(conn, command, 1, NULL, parameters, NULL, NULL, 0);
 
 							if (PQntuples(result) > 0) {
-								// TO-DO: RETRIEVE DATA FROM DB AND SEND TO CLIENT
+								int rows = PQntuples(result);
+								int cols = PQnfields(result);
+
+								std::vector<crow::json::wvalue> MHList;
+
+								for (int i = 0; i < rows; i++) {
+									crow::json::wvalue mh; //maintenance history
+									for (int j = 0; j < cols; j++) {
+										// Get column name and value
+										std::string colName = PQfname(result, j);
+										std::string val = PQgetvalue(result, i, j);
+										mh[colName] = val;
+									}
+									MHList.push_back(std::move(mh));
+								}
+								crow::json::wvalue historyPayload;
+								historyPayload = std::move(MHList);
+								std::string historyStr = historyPayload.dump();
+
+								PQclear(result);
+								std::vector<uint8_t> Payload(historyStr.begin(), historyStr.end());
+
+								//send to client
+								Packet responsePacket(PacketType::REPORT_DATA, 1, std::move(Payload));
+								std::vector<uint8_t> out = responsePacket.Serialize();
+								size_t totalToSend = out.size();
+								size_t totalSent = 0;
+								const char* bufPtr = (const char*)out.data();
+
+								while (totalSent < totalToSend) {
+									int sent = send(clientSocket, bufPtr + totalSent, totalToSend - totalSent, 0);
+									if (sent == SOCKET_ERROR) {
+										logger.Log("Maintenance history report send failed with error: " + std::to_string(WSAGetLastError()));
+										break;
+									}
+									totalSent += sent;
+								}
 							}
 							else {
 
