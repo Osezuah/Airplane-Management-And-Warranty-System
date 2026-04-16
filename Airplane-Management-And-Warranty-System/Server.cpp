@@ -296,7 +296,7 @@ int main() {
 							std::string airplaneID = std::to_string(data["airplaneID"].i());
 
 							const char* command =
-								"SELECT W.Status, WE.Description, WE.Image "
+								"SELECT W.Status, WE.Description "
 								"FROM Warranty W "
 								"LEFT JOIN WarrantyEvent WE ON W.WarrantyID = WE.WarrantyID_FK "
 								"WHERE W.AirplaneID_FK = $1 ORDER BY WE.WEventID DESC LIMIT 1";
@@ -304,21 +304,15 @@ int main() {
 							// Result format set to binary due to image data
 							PGresult* result = PQexecParams(conn, command, 1, NULL, parameters, NULL, NULL, 1);
 
-							if (PQntuples(result) > 0) {
+							const char* query = "SELECT regexp_replace(encode(Image, 'base64'), '\\n', '', 'g') FROM WarrantyEvent WE "
+												"LEFT JOIN Warranty W ON W.WarrantyID = WE.WarrantyID_FK "
+												"WHERE W.AirplaneID_FK = $1 ORDER BY WE.WEventID DESC LIMIT 1";
+							PGresult* imageResult = PQexecParams(conn, query, 1, NULL, parameters, NULL, NULL, 0);
+
+							if (PQntuples(result) > 0 && PQntuples(imageResult) > 0) {
 								std::string status = PQgetvalue(result, 0, 0);
 								std::string description = PQgetvalue(result, 0, 1);
-
-								//handle BYTEA image
-								char* escapedImage = PQgetvalue(result, 0, 2);
-								int actualStoredLength = PQgetlength(result, 0, 2);
-								std::cout << "Actual stored length in DB: " << actualStoredLength << std::endl;
-								size_t binaryLen = 0;
-								unsigned char* rawBinary = PQunescapeBytea((unsigned char*)escapedImage, &binaryLen);
-								//convert to base64 to send back to client
-								//std::string binaryStr = std::string((char*)rawBinary, binaryLen);
-								//std::string base64Image = crow::utility::base64encode(reinterpret_cast<const unsigned char*>(binaryStr.data()), binaryStr.size());
-								std::string base64Image = base64_encode(rawBinary, binaryLen);
-								PQfreemem(rawBinary);
+								std::string base64Image = PQgetvalue(imageResult, 0, 0);
 
 								// format json
 								crow::json::wvalue payload;
