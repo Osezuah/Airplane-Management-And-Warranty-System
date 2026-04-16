@@ -26,7 +26,7 @@ public:
     static Packet WarrantyEvent(uint32_t sequence, int airplaneID, const std::string& technicianID, int warrantyID, const std::string& description, const std::string& imageBytes);
 
     // Aircraft Record History
-    static Packet QueryRequest(uint32_t sequence, int airplaneID);
+    static Packet MaintenanceHistory(uint32_t sequence, int airplaneID);
     static Packet QueryResponse(uint32_t sequence, int totalCount, const std::string& records);
 
     // Warranty Record

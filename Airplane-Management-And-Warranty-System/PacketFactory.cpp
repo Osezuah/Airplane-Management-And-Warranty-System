@@ -49,12 +49,12 @@ Packet PacketFactory::WarrantyEvent(uint32_t sequence, int airplaneID, const std
     return Packetize(PacketType::WARRANTY_EVENT, sequence, body);
 }
 
-Packet PacketFactory::QueryRequest(uint32_t sequence, int airplaneID)
+Packet PacketFactory::MaintenanceHistory(uint32_t sequence, int airplaneID)
 {
     crow::json::wvalue body;
     body["airplaneID"] = airplaneID;
 
-    return Packetize(PacketType::QUERY_REQUEST, sequence, body);
+    return Packetize(PacketType::MAINTENANCE_HISTORY, sequence, body);
 }
 
 Packet PacketFactory::QueryResponse(uint32_t sequence, int totalCount, const std::string& records)

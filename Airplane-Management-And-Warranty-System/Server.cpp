@@ -247,7 +247,6 @@ int main() {
 							testFile.write(imageBytes.data(), imageBytes.size());
 							testFile.close();
 
-
 							if (imageBytes.empty()) {
 								logger.Log("Base64 decoding failed");
 								outputPacket = PacketFactory::Error(inputPacket.getSequence(), ErrorCode::INTERNAL, "Could not decode base64 image");
@@ -272,7 +271,7 @@ int main() {
 							// Reset state
 							stateMachine.TransitionStateTo(ServerState::CONNECTED);
 						}
-						else if (inputPacket.getType() == PacketType::QUERY_REQUEST) {
+						else if (inputPacket.getType() == PacketType::MAINTENANCE_HISTORY) {
 							std::string airplaneID = std::to_string(data["airplaneID"].i());
 
 							// Query DB for specific airplane from ID
@@ -301,7 +300,7 @@ int main() {
 								"LEFT JOIN WarrantyEvent WE ON W.WarrantyID = WE.WarrantyID_FK "
 								"WHERE W.AirplaneID_FK = $1 ORDER BY WE.WEventID DESC LIMIT 1";
 							const char* parameters[1] = { airplaneID.c_str() };
-							// Result format set to binary due to image data
+
 							PGresult* result = PQexecParams(conn, command, 1, NULL, parameters, NULL, NULL, 1);
 
 							const char* query = "SELECT regexp_replace(encode(Image, 'base64'), '\\n', '', 'g') FROM WarrantyEvent WE "
