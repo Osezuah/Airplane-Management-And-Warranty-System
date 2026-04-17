@@ -149,89 +149,41 @@ namespace IntegrationTests
 	TEST_CLASS(Logger_Tests)
 	{
 	public:
-
-		TEST_METHOD(IT_LOG_01_LogMaintenanceHistoryToClient)
+		//helper function for testing
+		//returns true if inputString matches any line in the file.
+		static bool FileContains(const std::string& filename, const std::string& inputString)
 		{
-			//ARRANGE
-
-
-			//ACT
-
-
-			//ASSET
-
+			std::ifstream file(filename);
+			std::string line;
+			while (std::getline(file, line))
+				if (line.find(inputString) != std::string::npos)
+					return true;
+			return false;
 		}
 
-		TEST_METHOD(IT_LOG_02_LogReceivedEvent)
+		TEST_METHOD(IT_LOG_01_LogStateTransitions)
 		{
-			//ARRANGE
+			// Arrange
+			const std::string testFileName = "IT_LOG_01_test.txt";
+			std::remove(testFileName.c_str());
+			::Logger logger(testFileName);
+			StateMachine stateMachine;
+			std::string expectedStartState;
+			std::string expectedEndState;
 
+			// Act
+			expectedStartState = stateMachine.StateToString();
+			logger.Log("Task received. State: " + stateMachine.StateToString());
+			stateMachine.TransitionStateTo(ServerState::WAITING_FOR_VERIFICATION);
+			expectedEndState = stateMachine.StateToString();
+			logger.Log("Task received. State: " + stateMachine.StateToString());
 
-			//ACT
+			// Assert
+			Assert::IsTrue(FileContains(testFileName, expectedStartState), L"Log entry should contain the staet state name.");
+			Assert::IsTrue(FileContains(testFileName, expectedEndState), L"Log entry should contain the end state name.");
+			Assert::IsTrue(FileContains(testFileName, "["), L"Log entry must contain a timestamp bracket.");
 
-
-			//ASSET
-
-		}
-
-		TEST_METHOD(IT_LOG_03_LogWarrantyEventToClient)
-		{
-			//ARRANGE
-
-
-			//ACT
-
-
-			//ASSET
-
-		}
-
-		TEST_METHOD(IT_LOG_04_LogStateTransitions)
-		{
-			//ARRANGE
-
-
-			//ACT
-
-
-			//ASSET
-
-		}
-
-		TEST_METHOD(IT_LOG_05_LogMaintenanceEventToServer)
-		{
-			//ARRANGE
-
-
-			//ACT
-
-
-			//ASSET
-
-		}
-
-		TEST_METHOD(IT_LOG_06_LogMaintenanceEventFromServer)
-		{
-			//ARRANGE
-
-
-			//ACT
-
-
-			//ASSET
-
-		}
-
-		TEST_METHOD(IT_LOG_07_LogWarrantyEventFromServer)
-		{
-			//ARRANGE
-
-
-			//ACT
-
-
-			//ASSET
-
+			std::remove(testFileName.c_str());
 		}
 	};
 };

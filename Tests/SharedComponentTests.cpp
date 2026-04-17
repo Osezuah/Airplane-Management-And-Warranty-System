@@ -4,6 +4,7 @@
 #include "StateMachine.h"
 #include "Packet.h"
 #include "PacketFactory.h"
+#include "Logger.h"
 #include <fstream>
 #include <string>
 #include <cstdio>
@@ -71,14 +72,32 @@ namespace SharedComponentTests
 
 		TEST_METHOD(UT_Log_01_LoggerCreatesAndWritesToFile)
 		{
-			//ARRANGE
+			// Arrange
+			const std::string testFileName = "UT_LOG_01_test.txt";
+			std::remove(testFileName.c_str());
+			const std::string expectedMessage = "UT-LOG-01 unit test";
+			::Logger logger(testFileName);
+			bool result = false;
 
+			// Act
+			logger.Log(expectedMessage);
+			logger.~Logger();
 
-			//ACT
+			std::ifstream file(testFileName);
+			Assert::IsTrue(file.is_open(),
+				L"Logger should create the log file on construction.");
 
+			std::ifstream testFile(testFileName);
+			std::string line;
+			while (std::getline(testFile, line))
+				if (line.find(expectedMessage) != std::string::npos)
+					result = true;
 
-			//ASSET
+			// Assert
+			Assert::IsTrue(result,
+				L"Logger should write the logged message to the file.");
 
+			std::remove(testFileName.c_str());
 		}
 	};
 }
