@@ -104,7 +104,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(SolutionDir)Airplane-Management-And-Warranty-System\x64\Debug\*.obj;$(SolutionDir)Client\x64\Debug\SocketConnection.obj;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)Airplane-Management-And-Warranty-System\x64\Debug\*.obj;$(SolutionDir)Client\x64\Debug\SocketConnection.obj;$(SolutionDir)Client\x64\Debug\BusinessLogic.obj;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

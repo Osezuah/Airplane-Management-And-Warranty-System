@@ -2,6 +2,7 @@
 #include "crow.h"
 #include <libpq-fe.h>
 #include "SocketConnection.h"
+#include "BusinessLogic.h"
 #include "..\Airplane-Management-And-Warranty-System\Logger.h"
 
 //logging function to log messages to client_log.txt using Logger class
@@ -9,6 +10,7 @@ void logging(const std::string& message) {
 	Logger logger("client_log.txt");
 	logger.Log(message);
 }
+
 
 int main() {
 	//copy http://localhost:8080 to search bar
@@ -51,38 +53,16 @@ int main() {
 
 	//route to access airplanes in database
 	CROW_ROUTE(app, "/airplanes")([conn]() {
-			const char* command = "SELECT * FROM Airplane";
-			PGresult* result = PQexec(conn, command);
 
-			if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-				PQclear(result);
-				return crow::response(500, "Database Query Failed");
-			}
-
-			int rows = PQntuples(result);
-			int cols = PQnfields(result);
-
-			std::vector<crow::json::wvalue> airplaneList;
-
-			for (int i = 0; i < rows; i++) {
-				crow::json::wvalue airplane;
-				for (int j = 0; j < cols; j++) {
-					// Get column name and value
-					std::string colName = PQfname(result, j);
-					std::string val = PQgetvalue(result, i, j);
-					airplane[colName] = val;
-				}
-				airplaneList.push_back(std::move(airplane));
-			}
-
-			// Clean up and return
-			PQclear(result);
-			crow::json::wvalue finalResponse;
-			finalResponse["data"] = std::move(airplaneList);
-
+		try {
+			crow::json::wvalue finalResponse = get_airplane_data_from_db(conn);
 			logging("Retrieved all airplanes from database.");
-
 			return crow::response(finalResponse);
+		}
+		catch (const std::exception& e) {
+			logging("Error retrieving airplane data: " + std::string(e.what()));
+			return crow::response(500, "Error retrieving airplane data: " + std::string(e.what()));
+		}
 	});
 
 	CROW_ROUTE(app, "/maintenance_event").methods("POST"_method)([](const crow::request& req) {
@@ -156,7 +136,7 @@ int main() {
 			PGresult* result = PQexecParams(conn, command, 1, NULL, parameters, NULL, NULL, 0);
 			if (PQntuples(result) > 0) {
 				char* val = PQgetvalue(result, 0, 0);
-				int warrantyID = std::stoi(val);
+				warrantyID = std::stoi(val);
 				std::cout << warrantyID << std::endl;
 
 				//send

@@ -137,6 +137,7 @@
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\PacketFactory.cpp" />
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\SequenceCounter.cpp" />
     <ClCompile Include="..\Airplane-Management-And-Warranty-System\TimeUtils.cpp" />
+    <ClCompile Include="BusinessLogic.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="SocketConnection.cpp" />
   </ItemGroup>
@@ -146,6 +147,7 @@
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\PacketFactory.h" />
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\SequenceCounter.h" />
     <ClInclude Include="..\Airplane-Management-And-Warranty-System\TimeUtils.h" />
+    <ClInclude Include="BusinessLogic.h" />
     <ClInclude Include="SocketConnection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
