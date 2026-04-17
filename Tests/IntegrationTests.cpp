@@ -124,7 +124,7 @@ namespace IntegrationTests
 			crow::json::rvalue body = crow::json::load(packet.payloadString());
 			actualAirplaneID = (int)body["airplaneID"].i();
 			actualTechnicianID = std::string(body["technicianID"].s());
-			expectedWarrantyID = (int)body["warrantyID"].i();
+			actualWarrantyID = (int)body["warrantyID"].i();
 			actualDescription = std::string(body["description"].s());
 			atualImageBytes = std::string(body["imageBytes"].s());
 
@@ -148,7 +148,6 @@ namespace IntegrationTests
 
 	TEST_CLASS(Logger_Tests)
 	{
-	public:
 		//helper function for testing
 		//returns true if inputString matches any line in the file.
 		static bool FileContains(const std::string& filename, const std::string& inputString)
@@ -160,6 +159,8 @@ namespace IntegrationTests
 					return true;
 			return false;
 		}
+
+	public:
 
 		TEST_METHOD(IT_LOG_01_LogStateTransitions)
 		{
