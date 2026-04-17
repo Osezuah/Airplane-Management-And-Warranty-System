@@ -11,7 +11,6 @@ void logging(const std::string& message) {
 	logger.Log(message);
 }
 
-
 int main() {
 	//copy http://localhost:8080 to search bar
 
@@ -75,7 +74,7 @@ int main() {
 		logging("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
-		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
+		if (!isEventRequestValid(Body)) {
 			terminate_connection(sock);
 			return crow::response(400, "Invalid JSON data received");
 		}
@@ -118,7 +117,7 @@ int main() {
 		logging("Connected to TCP server and completed handshake.");
 
 		auto Body = crow::json::load(req.body);
-		if (!Body || !Body.has("airplaneID") || !Body.has("technicianID")) {
+		if (!isEventRequestValid(Body)) {
 			terminate_connection(sock);
 			return crow::response(400, "Invalid JSON data received");
 		}

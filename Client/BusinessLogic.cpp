@@ -3,6 +3,10 @@
 
 crow::json::wvalue get_airplane_data_from_db(PGconn* conn)
 {
+	if (conn == nullptr || PQstatus(conn) != CONNECTION_OK) {
+		throw std::runtime_error("Invalid or closed database connection.");
+	}
+
 	const char* command = "SELECT * FROM Airplane";
 	PGresult* result = PQexec(conn, command);
 
@@ -33,4 +37,11 @@ crow::json::wvalue get_airplane_data_from_db(PGconn* conn)
 	finalResponse["data"] = std::move(airplaneList);
 
 	return finalResponse;
+}
+
+bool isEventRequestValid(const crow::json::rvalue& body) {
+	if (!body) return false;
+	if (!body.has("airplaneID") || !body.has("technicianID")) return false;
+
+	return true;
 }

@@ -4,3 +4,4 @@
 #include "crow.h"
 
 crow::json::wvalue get_airplane_data_from_db(PGconn* conn);
+bool isEventRequestValid(const crow::json::rvalue& body);
