@@ -95,14 +95,14 @@
                     <h2>Maintenance Event for Airplane ${name}</h2>
                     <form id="maintenanceForm">
                     <label for="eventType">Maintenance Event Type:</label><br>
-                    <select id="eventType">
+                    <select id="eventType" required>
                         <option value="">Select a type</option>
                         <option value="Inspection">Inspection</option>
                         <option value="Repair">Repair</option>
                         <option value="Oil Change">Oil Change</option>
                     </select><br><br>
                         <label for="description">Description:</label><br>
-                        <textarea id="description" placeholder="Description"></textarea><br><br>
+                        <textarea id="description" placeholder="Description" required></textarea><br><br>
                         <button type="submit">Submit Maintenance Event</button>
                     </form>
                 `;
